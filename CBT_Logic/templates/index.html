@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TreePal - Mental Health Support</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to TreePal</h2>
+            <p>Please enter your user ID to continue:</p>
+            <input type="text" id="userId" placeholder="Enter your user ID">
+            <button onclick="login()">Start Session</button>
+        </div>
+    </div>
+    <div class="container" style="display: none;" id="mainContainer">
+        <div class="header">
+            <h1>TreePal</h1>
+        </div>
+        
+        <div class="stage-indicator" id="stage-indicator">
+            Stage 1: Assessment
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-box" id="chat-box">
+                <div class="message bot">
+                    Welcome to TreePal! I'm here to chat and provide support. How are you feeling today?
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Type your message here...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
