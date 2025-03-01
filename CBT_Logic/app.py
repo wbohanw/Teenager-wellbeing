@@ -2,11 +2,13 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 from CBT_chat import CBTChatbot
 import datetime
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -32,34 +34,30 @@ def home():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    try:
-        data = request.json
-        
-        if not data or 'message' not in data:
-            return jsonify({
-                'status': 'error',
-                'error': 'Missing required field: message'
-            }), 400
-            
-        user_message = data['message']
-        user_id = data.get('user_id', 'default_user')
-        
-        chatbot = get_chatbot_session(user_id)
-        response = chatbot.chat(user_message)
-        alert_message = chatbot.alert(user_message)
-        
-        stage_progress = chatbot.get_stage_progress()
-        
-        return jsonify({
-            'response': response,
-            'alert': alert_message if alert_message else None,
-            'stage_progress': stage_progress
-        })
-    except Exception as e:
+    data = request.json
+    
+    if not data or 'message' not in data:
         return jsonify({
             'status': 'error',
-            'error': str(e)
-        }), 500
+            'error': 'Missing required field: message'
+        }), 400
+        
+    user_message = data['message']
+    user_id = data.get('user_id', 'default_user')
+    
+    chatbot = get_chatbot_session(user_id)
+    response = chatbot.chat(user_message)
+    alert_message = chatbot.alert(user_message)
+    
+    stage_progress = chatbot.get_stage_progress()
+    
+    return jsonify({
+        'response': response,
+        'alert': alert_message if alert_message else None,
+        'stage_progress': stage_progress
+    })
+
+
 
 @app.route('/reset/<user_id>', methods=['POST'])
 def reset_session(user_id):
@@ -106,6 +104,31 @@ def status():
             'realtime_test': '/gpt/realtime_test'
         }
     })
+
+# Test endpoint for regular GPT
+@app.route('/gpt/test', methods=['GET'])
+def test_gpt():
+    try:
+        test_prompt = "Give me a simple suggestion for a teenager who is feeling depressed."
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant for teenagers."},
+                {"role": "user", "content": test_prompt}
+            ],
+            temperature=0.1
+        )
+        
+        return jsonify({
+            'test_prompt': test_prompt,
+            'response': response.choices[0].message.content
+        })
+
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
 
 @app.errorhandler(404)
 def not_found(error):
