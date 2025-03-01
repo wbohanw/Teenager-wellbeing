@@ -1,12 +1,25 @@
-from flask import Flask, render_template, request, jsonify
-from CBT_chat_copy import CBTChatbot
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 import os
 from dotenv import load_dotenv
+from CBT_chat import CBTChatbot
 
 load_dotenv()
-app = Flask(__name__)
 api_key = os.getenv("OPENAI_API_KEY")
-chatbot = CBTChatbot(api_key)
+
+app = Flask(__name__, 
+    #do we need this??
+    static_folder='CBT_Logic_be/static',
+    template_folder='CBT_Logic_be/templates'
+)
+CORS(app)  
+
+user_sessions = {}
+
+def get_chatbot_session(user_id):
+    if user_id not in user_sessions:
+        user_sessions[user_id] = CBTChatbot(api_key)
+    return user_sessions[user_id]
 
 @app.route('/')
 def home():
@@ -14,22 +27,88 @@ def home():
 
 @app.route('/chat', methods=['POST'])
 def chat():
+    try:
+        data = request.json
+        
+        if not data or 'message' not in data:
+            return jsonify({
+                'status': 'error',
+                'error': 'Missing required field: message'
+            }), 400
+            
+        user_message = data['message']
+        user_id = data.get('user_id', 'default_user')
+        
+        chatbot = get_chatbot_session(user_id)
+        response = chatbot.chat(user_message)
+        alert_message = chatbot.alert(user_message)
+        
+        stage_progress = chatbot.get_stage_progress()
+        
+        return jsonify({
+            'response': response,
+            'alert': alert_message if alert_message else None,
+            'stage_progress': stage_progress
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
 
-    user_message = request.json['message']
+@app.route('/reset/<user_id>', methods=['POST'])
+def reset_session(user_id):
+    if user_id in user_sessions:
+        del user_sessions[user_id]
+        return jsonify({
+            'status': 'success',
+            'message': f'Session for user {user_id} has been reset'
+        })
+    else:
+        return jsonify({
+            'status': 'warning',
+            'message': f'No session found for user {user_id}'
+        })
+
+@app.route('/status/<user_id>', methods=['GET'])
+def get_session_status(user_id):
+    if user_id not in user_sessions:
+        return jsonify({
+            'status': 'error',
+            'message': f'No session found for user {user_id}'
+        }), 404
     
-    if user_message.lower() == 'quit':
-        return jsonify({'response': 'Chatbot session ended.'})
-    
-    response = chatbot.chat(user_message)
-    alert_message = chatbot.alert(user_message)
-    
-    stage_progress = chatbot.get_stage_progress()
+    chatbot = user_sessions[user_id]
     
     return jsonify({
-        'response': response,
-        'alert': alert_message if alert_message else None,
-        'stage_progress': stage_progress
+        'status': 'success',
+        'current_stage': chatbot.get_current_stage_name(),
+        'stage_progress': chatbot.get_stage_progress(),
+        'therapy_type': getattr(chatbot, 'chosen_therapy', None),
+        'conversation_length': len(chatbot.conversation_history)
     })
+
+# Status endpoint
+@app.route('/gpt/status', methods=['GET'])
+def status():
+    return jsonify({
+        'status': 'online',
+        'api_key_configured': bool(os.getenv('OPENAI_API_KEY')),
+        'endpoints': {
+            'regular_chat': '/gpt/chat',
+            'realtime_chat': '/gpt/realtime_chat',
+            'regular_test': '/gpt/test',
+            'realtime_test': '/gpt/realtime_test'
+        }
+    })
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def server_error(error):
+    return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
