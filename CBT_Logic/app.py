@@ -3,16 +3,13 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 from CBT_chat import CBTChatbot
+import datetime
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 
-app = Flask(__name__, 
-    #do we need this??
-    static_folder='CBT_Logic_be/static',
-    template_folder='CBT_Logic_be/templates'
-)
-CORS(app)  
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 user_sessions = {}
 
@@ -21,9 +18,17 @@ def get_chatbot_session(user_id):
         user_sessions[user_id] = CBTChatbot(api_key)
     return user_sessions[user_id]
 
+
 @app.route('/')
 def home():
-    return render_template('index.html')
+    """
+    Home route.
+    """
+    today = datetime.date.today()
+    year = today.strftime("%Y")
+
+    return '@TreePal - Teenage Mental well-being ' + year
+
 
 @app.route('/chat', methods=['POST'])
 def chat():
