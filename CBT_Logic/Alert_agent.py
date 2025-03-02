@@ -49,7 +49,7 @@ class AlertAgent:
 
         try:
             analysis = json.loads(response.choices[0].message.content)
-            if analysis["concern"]:
+            if analysis["alert"]:
                 self.self_harm_count += 1
             return analysis
         except json.JSONDecodeError:

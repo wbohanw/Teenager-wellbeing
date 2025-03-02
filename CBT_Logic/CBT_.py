@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 class ChatGPTResponseGenerator:
     def __init__(self, base_instruction):
-        self.model = "gpt-4"
+        self.model = "gpt-4o-mini"
         self.base_instruction = base_instruction
 
     def generate_response(self, user_input):
@@ -33,7 +33,7 @@ class ChatGPTDialogueSummarizer:
 
     def summarize_dialogue(self, dialogue_history):
         filtered_dialogue = self.dialogue_filter(dialogue_history, self.gpt_params)
-        response = client.chat.completions.create(model="gpt-4",
+        response = client.chat.completions.create(model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": self.base_instruction},
             {"role": "user", "content": json.dumps(filtered_dialogue)}

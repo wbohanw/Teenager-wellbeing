@@ -38,7 +38,7 @@ class ExploreFormulationStage(ChatGPTResponseGenerator):
         )
     def process(self, user_input: str) -> str:
         prompt = f"{self.base_instruction}\n\nUser: {user_input}\n\nTherapist:"
-        response = client.chat.completions.create(model="gpt-4",
+        response = client.chat.completions.create(model="gpt-4o-mini",
         messages=[{"role": "system", "content": prompt}])
         return response.choices[0].message.content
         

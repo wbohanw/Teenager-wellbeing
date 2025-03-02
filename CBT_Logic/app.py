@@ -34,21 +34,42 @@ def home():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    data = request.json
-    
-    if not data or 'message' not in data:
+    try:
+        data = request.json
+        
+        if not data or 'message' not in data:
+            return jsonify({
+                'status': 'error',
+                'error': 'Missing required field: message'
+            }), 400
+            
+        user_message = data['message']
+        user_id = data.get('user_id', 'default_user')
+        
+        chatbot = get_chatbot_session(user_id)
+        response = chatbot.chat(user_message)
+        alert_message = chatbot.alert(user_message)
+        
+        stage_progress = chatbot.get_stage_progress()
+        
+        return jsonify({
+            'response': response,
+            'alert': alert_message if alert_message else None,
+            'stage_progress': stage_progress
+        })
+    except Exception as e:
+        print(f"Error in chat endpoint: {e}")
         return jsonify({
             'status': 'error',
-            'error': 'Missing required field: message'
-        }), 400
-        
-    user_message = data['message']
-    user_id = data.get('user_id', 'default_user')
-    
+            'error': str(e)
+        }), 500
+
+@app.route('/chat/<message>', methods=['GET'])
+def chat_get(message):
+    user_id = 'default_user'
     chatbot = get_chatbot_session(user_id)
-    response = chatbot.chat(user_message)
-    alert_message = chatbot.alert(user_message)
-    
+    response = chatbot.chat(message)
+    alert_message = chatbot.alert(message)
     stage_progress = chatbot.get_stage_progress()
     
     return jsonify({
@@ -56,8 +77,6 @@ def chat():
         'alert': alert_message if alert_message else None,
         'stage_progress': stage_progress
     })
-
-
 
 @app.route('/reset/<user_id>', methods=['POST'])
 def reset_session(user_id):

@@ -6,8 +6,8 @@ from Stage_2 import ExploreFormulationStage, ExploreFormulationSummarizer
 from Stage_3 import InformationGatheringStage, InformationGatheringSummarizer
 from Stage_4 import TherapyImplementationSummarizer, TherapyImplementationStage
 from Therapy_Router import TherapyRouter
-from Alert_agent import AlertAgent
 from schedule import TherapyScheduler
+from Alert_agent import AlertAgent
 import os
 from dotenv import load_dotenv
 import json

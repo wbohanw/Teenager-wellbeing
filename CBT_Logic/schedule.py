@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import json
 from typing import List, Dict
 
+
 class TherapyScheduler:
     def __init__(self):
         self.follow_up_data = {}

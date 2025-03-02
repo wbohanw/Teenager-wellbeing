@@ -146,7 +146,7 @@ Remember to tailor your responses to the specific needs and challenges of the te
             prompt += f"{turn['role'].capitalize()}: {turn['content']}\n"
         prompt += f"\nUser: {user_input}\n\nTherapist (incorporate the retrieved advice, apply the {chosen_therapy} approach, and ask for the teenager's opinion):"
 
-        response = client.chat.completions.create(model="gpt-4",
+        response = client.chat.completions.create(model="gpt-4o-mini",
         messages=[{"role": "system", "content": prompt}])
 
         return response.choices[0].message.content
