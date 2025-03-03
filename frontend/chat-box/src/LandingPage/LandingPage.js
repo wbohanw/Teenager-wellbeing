@@ -12,6 +12,7 @@ function LandingPage() {
           👋 <span>Hello, I am Milo</span>
         </span>
 
+
         <button className="chat-button" onClick={() => navigate("/chat")}>
           Let's Chat
         </button>

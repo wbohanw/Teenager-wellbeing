@@ -1,27 +1,30 @@
 import React, { useState } from "react";
 import "./ChatPage.css";
 import miloImg from "../images/milo.png";
+import { sendMessageToChatbot } from "../connector";
 
 function ChatPage() {
   const [messages, setMessages] = useState([
-    { text: "Hello, I'm Milo. How do you feel today?", sender: "bot" },
+    { text: "你好，我是Milo, 今天感觉怎么样？", sender: "bot" },
   ]);
   const [inputText, setInputText] = useState("");
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (inputText.trim() === "") return;
-    
+
     const newMessages = [...messages, { text: inputText, sender: "user" }];
     setMessages(newMessages);
     setInputText("");
 
-    setTimeout(() => {
+    const response = await sendMessageToChatbot(inputText);
+    if (response.response) {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "That's interesting! Tell me more.", sender: "bot" },
+        { text: response.response, sender: "bot" },
       ]);
-    }, 1000);
+    }
   };
+
     
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
