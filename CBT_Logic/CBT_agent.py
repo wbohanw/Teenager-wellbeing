@@ -17,11 +17,8 @@ class CBTAgent:
         }
 
     def should_advance_stage(self, summary_json):
-        try:
-            summary = json.loads(summary_json)
-        except json.JSONDecodeError:
-            print("Error: Invalid JSON format in summary")
-            return False
+        summary = json.loads(summary_json)
+        
         return summary.get("move_to_next", False)
     
     def advance_stage(self) -> None:

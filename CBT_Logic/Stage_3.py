@@ -14,7 +14,6 @@ class InformationGatheringStage(ChatGPTResponseGenerator):
             base_instruction="""
             if the user is in using Chinese, please give the response in Chinse as well. 
     There is the chat_history: {self.conversation_history}
-Your role: You are a therapist gathering detailed information to determine the most appropriate therapy approach for a teenager.
 Your task: Explore the teenager's thoughts, emotions, behaviors, and coping mechanisms in more depth.
 Please always remember the patient is a teenager, who is 12-18 years old.
 
@@ -47,39 +46,48 @@ Note: answer a question at a time! Do not overwhelm the user.
 class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
     def __init__(self):
         super().__init__(
-            base_instruction="""
-            based on the following conversation history: {self.conversation_history}
-- Analyze the dialogue history to determine if sufficient information has been gathered to inform therapy selection.
-- Look for key insights into the teenager's thought patterns, emotional experiences, behavioral tendencies, and coping mechanisms.
-- Assess the depth and quality of information gathered about the teenager's personal history and current challenges.
-- Use JSON format with the following properties:
-    (1) key_issues: Array of primary challenges or concerns identified.
-    (2) emotional_patterns: Description of the teenager's typical emotional responses and their intensity.
-    (3) coping_mechanisms: Array of strategies the teenager uses to handle difficult situations.
-    (4) support_system: Brief description of the teenager's relationships and support network.
-    (5) move_to_next: Boolean indicating whether enough information has been gathered to proceed to therapy selection.
-    (6) rationale: Explanation for the decision to move or not move to the next stage.
-""",
-            examples=[
-                (
-                    [
-                        {"role": "assistant", "content": "Can you tell me more about how you typically handle stressful situations?"},
-                        {"role": "user", "content": "When I'm stressed, I usually isolate myself and avoid talking to anyone. Sometimes I feel overwhelmed and have trouble concentrating on schoolwork."},
-                        {"role": "assistant", "content": "I see. How would you describe your relationships with family and friends?"},
-                        {"role": "user", "content": "I'm close to my mom, but I often argue with my dad. I have a few good friends, but I sometimes feel like I can't really open up to them."}
-                    ],
-                    json.dumps({
-                        'key_issues': ['Social isolation', 'Difficulty managing stress', 'Academic challenges'],
-                        'emotional_patterns': 'Tends to feel overwhelmed and withdraws when stressed',
-                        'coping_mechanisms': ['Isolation', 'Avoidance'],
-                        'support_system': 'Close relationship with mother, strained relationship with father, limited openness with friends',
-                        'move_to_next': True,
-                        'rationale': "Sufficient information has been gathered about the teenager's emotional patterns, coping mechanisms, and support system to inform therapy selection."
-                    })
-                )
-            ],
+            base_instruction = """
+        Given the following conversation history: {self.conversation_history}
+        - Analyze the dialogue history to determine if sufficient information has been gathered to inform therapy selection.
+        - Identify key insights into the teenager's thought patterns, emotional experiences, behavioral tendencies, and coping mechanisms.
+        - Assess the depth and quality of information about the teenager's personal history and current challenges.
+        - Provide a structured JSON response with the following properties:
+
+        (1) key_issues: List of primary challenges or concerns identified.
+        (2) emotional_patterns: Description of the teenager's typical emotional responses and their intensity.
+        (3) coping_mechanisms: List of strategies the teenager uses to handle difficult situations.
+        (4) support_system: Brief description of the teenager's relationships and support network.
+        (5) move_to_next: Boolean indicating whether enough information has been gathered to proceed to therapy selection.
+        (6) rationale: Explanation for the decision to move or not move to the next stage.
+
+        Guidelines for determining `move_to_next`:
+        - Set to `true` if the teenager's key concerns, emotional patterns, coping mechanisms, and support system have been sufficiently discussed.
+        - Set to `true` if the conversation has lasted long enough to establish a clear understanding of their situation.
+        - Set to `false` if more clarification is needed about their emotional responses, coping strategies, or relationships.
+
+        ### Example:
+
+        #### Input:
+        [
+            {"role": "assistant", "content": "当你感到压力很大时，你通常会怎么做？"},
+            {"role": "user", "content": "我会自己待着，不想跟别人说话。有时候会焦虑到没办法集中注意力学习。"},
+            {"role": "assistant", "content": "我明白了。你和家人、朋友的关系怎么样呢？"},
+            {"role": "user", "content": "我和妈妈关系很好，但经常和爸爸争吵。我有几个好朋友，但有时觉得不能完全敞开心扉。"}
+        ]
+
+        #### Output:
+        {
+            "key_issues": ["Social isolation", "Difficulty managing stress", "Academic challenges"],
+            "emotional_patterns": "Feels overwhelmed under stress and tends to withdraw from social interactions.",
+            "coping_mechanisms": ["Self-isolation", "Avoidance"],
+            "support_system": "Close relationship with mother, strained relationship with father, limited openness with friends.",
+            "move_to_next": true,
+            "rationale": "Sufficient information has been gathered regarding the teenager's emotional patterns, coping mechanisms, and support system, allowing for an informed therapy selection."
+        }
+
+        """,
             gpt_params={"temperature": 0.1},
-            dialogue_filter=lambda dialogue, _: dialogue[-4:]
+            dialogue_filter=lambda dialogue, _: dialogue[-5:]
         )
 
     def summarize(self, dialogue: List[Dict[str, str]]) -> str:
@@ -89,7 +97,8 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
         prompt += "\nSummary:"
         
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
         )
+        print(response)
         return response.choices[0].message.content

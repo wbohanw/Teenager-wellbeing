@@ -56,7 +56,7 @@ class CBTChatbot:
         Therapist response:
         """
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
         )
         therapy_response = response.choices[0].message.content
@@ -71,15 +71,15 @@ class CBTChatbot:
         self.conversation_history.append({"role": "user", "content": user_input})
         self.conversation_history.append({"role": "assistant", "content": response})
         
-        summary_json = current_summarizer.summarize(self.conversation_history)
+        response = current_summarizer.summarize(self.conversation_history)
         
-        if self.agent.should_advance_stage(summary_json):
-            self.agent.advance_stage()
-            if self.agent.current_stage == 3:
-                response += f"\n\nWe've gathered important information. Now, let's determine the best approach to help you further."
-            else:
-                next_stage = self.agent.get_current_stage()
-                response += f"\n\nWe're now moving to the next stage: {next_stage}"
+        # if self.agent.should_advance_stage(summary_json):
+        #     self.agent.advance_stage()
+        #     if self.agent.current_stage == 3:
+        #         response += f"\n\nWe've gathered important information. Now, let's determine the best approach to help you further."
+        #     else:
+        #         next_stage = self.agent.get_current_stage()
+        #         response += f"\n\nWe're now moving to the next stage: {next_stage}"
 
         return response
 

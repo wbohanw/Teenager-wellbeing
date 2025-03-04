@@ -52,45 +52,45 @@ Note: answer a question at a time! Do not overwhelm the user.
 class AssessmentSummarizer(ChatGPTDialogueSummarizer):
     def __init__(self):
         super().__init__(
-        base_instruction="""
-        based on the following conversation history: {self.conversation_history}
-        - You are a helpful assistant that analyzes the content of the dialog history.
-        - Given a dialogue history, determine whether user is appropriate to receive this type of support. 
-        - Move to the next phase only when finish all the requirements that list in our instruction.
-        - Use JSON format with the following properties:
-        You are a helpful assistant that analyzes the content of the dialog history.
-        Given a dialogue history, determine whether the user is appropriate to receive this type of support.
-        Use JSON format with the following properties:
-        (1) stress_level: Current stress levels (Low, Moderate, High)
-        (2) user_emotion: The primary emotion of the user caused by their key issues
-        (3) eligible_for_therapy: A boolean indicating whether the user is eligible for therapy
-        (4) move_to_next: A boolean indicating whether it is reasonable to move on to the next conversation phase
-        (5) rationale: Describe your rationale on how the above properties were derived
+        base_instruction = """
+        Given the following conversation history: {self.conversation_history}
+        - You are a helpful assistant that analyzes dialogue content.
+        - Your task is to assess the user's emotional state and determine their eligibility for support.
+        - Provide a structured JSON response with the following properties:
 
-        Guidelines for determining move_to_next:
-        - Set to true if the user has shared their primary concerns
-        - Set to true if you have established a good rapport with the user
-        - Set to true if the conversation has covered the user's emotions and experiences sufficiently
-        - Set to true if the dialogue has lasted for more than 5 turns
-        - Otherwise, set to false
+        (1) stress_level: User's current stress level (Low, Moderate, High)
+        (2) user_emotion: The primary emotion the user is experiencing
+        (3) eligible_for_therapy: Boolean indicating whether the user is eligible for therapy
+        (4) move_to_next: Boolean indicating if it's reasonable to proceed to the next phase
+        (5) rationale: Explanation of how the above properties were derived
 
-        Refer to the example below:
-        """,
-        examples=[(
-            [
-            {"role": "assistant", "content": "你今天想我聊些什么呢?"},
+        Guidelines for determining `move_to_next`:
+        - Set to `true` if the user has shared their primary concerns.
+        - Set to `true` if good rapport has been established.
+        - Set to `true` if the conversation has sufficiently covered the user's emotions and experiences.
+        - Set to `true` if the dialogue has lasted more than 5 turns.
+        - Otherwise, set to `false`.
+
+        Example:
+
+        Input:
+        [
+            {"role": "assistant", "content": "你今天想聊些什么呢?"},
             {"role": "user", "content": "我今天被同学欺负了"},
             {"role": "assistant", "content": "被同学欺负了，为什么呢？"},
             {"role": "user", "content": "我现在心情很糟糕，很压抑"}
-            ],
-            json.dumps({
-                'stress_level': 'high',
-                'user_emotion': 'felt nervous',
-                'move_to_next': True,
-                'rationale':"The user expressed a key episode of being bullied and their emotion of feeling very down and oppressed was identified."
-            })
-        )
-        ],
+        ]
+
+        Output:
+        {
+            "stress_level": "high",
+            "user_emotion": "felt nervous",
+            "eligible_for_therapy": true,
+            "move_to_next": true,
+            "rationale": "The user expressed a key episode of being bullied, and their emotions of feeling very down and oppressed were clearly identified."
+        }
+
+        """,
         gpt_params={"temperature": 0.1},
         dialogue_filter=lambda dialogue, _: dialogue[-5:]
     )
@@ -102,7 +102,7 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
         prompt += "\nSummary:"
         try:
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[{"role": "system", "content": prompt}]
             )
             print(response)

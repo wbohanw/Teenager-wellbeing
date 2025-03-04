@@ -43,7 +43,7 @@ class AlertAgent:
         prompt = f"{self.base_instruction}\n\nConversation:\n{conversation_text}\n\nAnalysis:\n{user_input}"
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
         )
 

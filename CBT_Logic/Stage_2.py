@@ -46,35 +46,49 @@ class ExploreFormulationStage(ChatGPTResponseGenerator):
 class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
     def __init__(self):
         super().__init__(
-            base_instruction="""
-            based on the following conversation history: {self.conversation_history}
-- Analyze the dialogue history to determine if sufficient exploration and formulation have occurred.
-- Look for key cognitive patterns, recurring thoughts, and behavioral tendencies in the user's responses.
-- Determine if enough information has been gathered to move to the next stage.
-- Use JSON format with the following properties:
-    (1) identified_patterns: Array of cognitive patterns or recurring thoughts identified.
-    (2) behavioral_tendencies: Array of notable behavioral tendencies observed.
-    (3) underlying_beliefs: Array of underlying beliefs or assumptions identified.
-    (4) move_to_next: Boolean indicating whether to proceed to the next stage.
-    (5) rationale: Explanation for the decision to move or not move to the next stage.
-""",
-            examples=[(
-                [
-                {"role": "assistant", "content": "你能告诉我最近一次感到焦虑的情况吗？当时你的想法是什么？"},
-                {"role": "user", "content": "上周我有个重要的考试，我一直担心自己会失败。我觉得如果考砸了，我就是个失败者。"},
-                {"role": "assistant", "content": "听起来你对考试结果有很大的压力。你为什么觉得考试成绩能决定你是否是个失败者呢？"},
-                {"role": "user", "content": "因为我觉得如果我不能在每件事上都做到最好，那就意味着我不够优秀。"}
-                ],
-                json.dumps({
-                    'identified_patterns': ['黑白思维', '过度概括化'],
-                    'behavioral_tendencies': ['在压力情况下感到焦虑', '对自己要求过高'],
-                    'underlying_beliefs': ['考试成绩不理想只是学习过程的一部分，不代表整体价值'],
-                    'move_to_next': True,
-                    'rationale': "We have identified key cognitive patterns and behavioral tendencies. The user has shared enough information about their thought processes to move to the next stage."
-                })
-            )],
+            base_instruction = """
+        Given the following conversation history: {self.conversation_history}
+        - You are a helpful assistant that analyzes dialogue content.
+        - Your task is to assess the user's emotional state, communication patterns, and determine their need for support.
+        - Provide a structured JSON response with the following properties:
+
+        (1) stress_level: User's current stress level (Low, Moderate, High)
+        (2) user_emotion: The primary emotion the user is experiencing
+        (3) eligible_for_therapy: Boolean indicating whether the user is eligible for therapy
+        (4) move_to_next: Boolean indicating if it's reasonable to proceed to the next phase
+        (5) rationale: Explanation of how the above properties were derived
+
+        Guidelines for determining `move_to_next`:
+        - Set to `true` if the user has clearly expressed their primary concerns.
+        - Set to `true` if the conversation has sufficiently explored the user's emotions and experiences.
+        - Set to `true` if rapport has been established.
+        - Set to `true` if the dialogue has lasted more than 5 turns.
+        - Otherwise, set to `false`.
+
+        Example:
+
+        ### Input:
+        [
+            {"role": "assistant", "content": "你今天想聊些什么呢？"},
+            {"role": "user", "content": "我最近学习压力很大，感觉快撑不住了。"},
+            {"role": "assistant", "content": "听起来你承受了很大的压力，是什么让你感到如此焦虑呢？"},
+            {"role": "user", "content": "我有很多作业，还要准备考试，感觉根本做不完。"},
+            {"role": "assistant", "content": "你的焦虑主要是因为学业负担太重，对吗？"},
+            {"role": "user", "content": "是的，我每天都在担心自己跟不上进度。"}
+        ]
+
+        ### Output:
+        {
+            "stress_level": "high",
+            "user_emotion": "overwhelmed",
+            "eligible_for_therapy": true,
+            "move_to_next": true,
+            "rationale": "The user has explicitly stated feeling overwhelmed due to academic stress. Their emotions and concerns have been discussed over multiple turns, making it reasonable to proceed."
+        }
+
+        """,
             gpt_params={"temperature": 0.1},
-            dialogue_filter=lambda dialogue, _: dialogue[-3:]
+            dialogue_filter=lambda dialogue, _: dialogue[-5:]
         )
     def summarize(self, dialogue: List[Dict[str, str]]) -> str:
         prompt = f"{self.base_instruction}\n\nDialogue:\n"
@@ -83,7 +97,8 @@ class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
         prompt += "\nSummary:"
         
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
         )
+        print(response)
         return response.choices[0].message.content

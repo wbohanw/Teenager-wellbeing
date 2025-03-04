@@ -154,39 +154,51 @@ Remember to tailor your responses to the specific needs and challenges of the te
 class TherapyImplementationSummarizer(ChatGPTDialogueSummarizer):
     def __init__(self):
         super().__init__(
-            base_instruction="""
-            based on the following conversation history: {self.conversation_history}
-- Analyze the dialogue history to assess the progress of the advice implementation.
-- Evaluate the teenager's engagement with the provided advice and any changes in their perspective or emotional state.
-- Use JSON format with the following properties:
-    (1) key_issues: Array of main challenges or concerns addressed in the session.
-    (2) provided_advice: Summary of the main advice or strategies suggested.
-    (3) user_response: Assessment of how the teenager responded to the advice (e.g., receptive, hesitant, etc.).
-    (4) observed_changes: Description of any positive changes or shifts in perspective noticed.
-    (5) areas_for_focus: Array of aspects that need more attention in future interactions.
-    (6) continue_session: Boolean indicating whether to continue with more advice sessions.
-    (7) retrieve_new_advice: Boolean indicating whether new advice should be retrieved.
-    (8) rationale: Explanation for the assessment and the decision to continue or conclude.
-""",
-            examples=[
-                (
-                    [
-                        {"role": "assistant", "content": "Based on the CBT approach and the advice I've retrieved, it's important to recognize that your worth isn't determined by what others say. Have you tried challenging these negative thoughts when they come up? For example, you could ask yourself if there's any evidence that contradicts what your classmates are saying. How does this advice sound to you?"},
-                        {"role": "user", "content": "I'm not sure... It's hard to think positively when they keep making fun of me."},
-                        {"role": "assistant", "content": "I understand it can be challenging. Let's try a different approach. The advice suggests practicing self-compassion. Could you think of something kind you might say to a friend in your situation? How would you treat them?"}
-                    ],
-                    json.dumps({
-                        'key_issues': ['Low self-esteem', 'Bullying'],
-                        'provided_advice': 'Challenging negative thoughts, practicing self-compassion',
-                        'user_response': 'Initially hesitant, but open to new suggestions',
-                        'observed_changes': 'Slight willingness to consider alternative perspectives',
-                        'areas_for_focus': ['Building self-esteem', 'Developing coping strategies for bullying'],
-                        'continue_session': True,
-                        'retrieve_new_advice': False,
-                        'rationale': "The teenager is showing some openness to the advice. While initially hesitant, they engaged with the follow-up suggestion. Continue with the current approach but be prepared to adjust if needed."
-                    })
-                )
-            ],
+            base_instruction = """
+        Given the following conversation history: {self.conversation_history}
+        - Analyze the dialogue history to assess the progress of the advice implementation.
+        - Evaluate the teenager's engagement with the provided advice and any changes in their perspective or emotional state.
+        - Provide a structured JSON response with the following properties:
+
+        (1) key_issues: List of main challenges or concerns addressed in the session.
+        (2) provided_advice: Summary of the main advice or strategies suggested.
+        (3) user_response: Assessment of how the teenager responded to the advice (e.g., receptive, hesitant, resistant).
+        (4) observed_changes: Description of any positive changes or shifts in perspective noticed.
+        (5) areas_for_focus: List of aspects that need more attention in future interactions.
+        (6) continue_session: Boolean indicating whether to continue with more advice sessions.
+        (7) retrieve_new_advice: Boolean indicating whether new advice should be retrieved.
+        (8) rationale: Explanation for the assessment and the decision to continue or conclude.
+
+        Guidelines for `continue_session`:
+        - Set to `true` if the teenager still needs additional support and engagement.
+        - Set to `false` if they have reached a stable resolution or if further engagement is unnecessary.
+
+        Guidelines for `retrieve_new_advice`:
+        - Set to `true` if the current advice was insufficient or if new approaches should be considered.
+        - Set to `false` if the teenager is already making progress with the given advice.
+
+        ### Example:
+
+        #### Input:
+        [
+            {"role": "assistant", "content": "你觉得上次的建议对你有帮助吗？"},
+            {"role": "user", "content": "我试着按照你的建议，每天写下自己的情绪，感觉有点帮助，但有时候还是会觉得很难过。"},
+            {"role": "assistant", "content": "很棒的开始！你有没有发现自己的情绪有什么变化？"},
+            {"role": "user", "content": "有时候会觉得好一些，但还是经常感到压力很大，特别是面对考试的时候。"}
+        ]
+
+        #### Output:
+        {
+            "key_issues": ["Emotional regulation", "Academic stress"],
+            "provided_advice": "Encouraged the user to track their emotions daily to improve self-awareness.",
+            "user_response": "Receptive but still experiencing emotional difficulties.",
+            "observed_changes": "User has started journaling emotions and noticed some improvement but still struggles under stress.",
+            "areas_for_focus": ["Managing stress during exams", "Developing additional coping strategies"],
+            "continue_session": true,
+            "retrieve_new_advice": true,
+            "rationale": "The user has engaged with the advice and shown some progress, but they continue to struggle with academic stress. Additional guidance and coping strategies are needed."
+        }
+        """,
             gpt_params={"temperature": 0.1},
             dialogue_filter=lambda dialogue, _: dialogue[-5:]
         )
@@ -198,9 +210,10 @@ class TherapyImplementationSummarizer(ChatGPTDialogueSummarizer):
         prompt += "\nSummary:"
         
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
         )
+        print(response)
         return response.choices[0].message.content
     
 

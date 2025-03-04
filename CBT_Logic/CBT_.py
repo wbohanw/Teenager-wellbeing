@@ -25,9 +25,8 @@ class ChatGPTResponseGenerator:
 
 
 class ChatGPTDialogueSummarizer:
-    def __init__(self, base_instruction, examples, gpt_params, dialogue_filter):
+    def __init__(self, base_instruction, gpt_params, dialogue_filter):
         self.base_instruction = base_instruction
-        self.examples = examples
         self.gpt_params = gpt_params
         self.dialogue_filter = dialogue_filter
 

@@ -89,7 +89,7 @@ class CBTChatbot:
         User's last input: {self.conversation_history[-1]['content']}
         """
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
         )
         return response.choices[0].message.content
@@ -145,7 +145,7 @@ class CBTChatbot:
         Provide a therapy response in the same language as the user's input:
         """
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
         )
         therapy_response = response.choices[0].message.content
