@@ -17,6 +17,7 @@ function ChatPage() {
     setInputText("");
 
     const response = await sendMessageToChatbot(inputText);
+    console.log(response);
     if (response.response) {
       setMessages((prevMessages) => [
         ...prevMessages,
