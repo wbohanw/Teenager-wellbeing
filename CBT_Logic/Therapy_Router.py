@@ -57,7 +57,6 @@ class TherapyRouter:
         return result["chosen_therapy"], result["rationale"]
     
 def test_therapy_router():
-    # Sample conversation history
     sample_history = [
         {"role": "user", "content": "I feel very depressed and anxious all the time."},
         {"role": "assistant", "content": "I'm sorry to hear that you're feeling this way. Can you tell me more about what's been happening?"},

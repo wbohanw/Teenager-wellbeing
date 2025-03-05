@@ -50,7 +50,6 @@ Remember to tailor your responses to the specific needs and challenges of the te
     def retrieve_advice(self, context: str, k: int = 2):
         query_embedding = embed_model.embed_query(context)
         results = index.query(vector=query_embedding, top_k=k, include_metadata=True)
-        print(results)
         advice_list = []
         for match in results['matches']:
             score = match.get('score', 0)
@@ -62,15 +61,11 @@ Remember to tailor your responses to the specific needs and challenges of the te
     def visualize_advice_scores(self, context: str, k: int = 10):
         advice_list = self.retrieve_advice(context, k)
         
-        # Sort advice list based on ID
         advice_list.sort(key=lambda x: int(x[2]))
-        
-        # Extract scores, texts, and IDs
         scores = [1 - score for score, _, _ in advice_list]  # Convert similarity to distance
         texts = [text for _, text, _ in advice_list]
         ids = [int(id) for _, _, id in advice_list]
         
-        # Generate random x and y coordinates for visual spread
         x = np.random.rand(len(scores))
         y = np.random.rand(len(scores))
         def split_text(text, max_len=50):
@@ -106,8 +101,6 @@ Remember to tailor your responses to the specific needs and challenges of the te
             customdata=list(zip(ids, [1-score for score in scores], 
                                 [t[0] for t in texts], [t[1] for t in texts]))
         )])
-        
-        # Update the layout
         fig.update_layout(
             title='3D Visualization of Retrieved Advice Scores',
             scene=dict(
@@ -213,7 +206,6 @@ class TherapyImplementationSummarizer(ChatGPTDialogueSummarizer):
             model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
         )
-        print(response)
         return response.choices[0].message.content
     
 

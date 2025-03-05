@@ -92,7 +92,7 @@ class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
         )
     def summarize(self, dialogue: List[Dict[str, str]]) -> str:
         prompt = f"{self.base_instruction}\n\nDialogue:\n"
-        for turn in dialogue[-5:]:  # Consider last 5 turns
+        for turn in dialogue[-10:]:  # Consider up to 10 turns
             prompt += f"{turn['role'].capitalize()}: {turn['content']}\n"
         prompt += "\nSummary:"
         
@@ -100,5 +100,36 @@ class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
             model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
         )
-        print(response)
-        return response.choices[0].message.content
+        
+        try:
+            summary = json.loads(response.choices[0].message.content)
+            
+            # Count user messages in stage 2
+            # We need to determine which messages belong to stage 2
+            # Let's assume all messages after the last stage transition are in the current stage
+            stage_2_start_index = 0
+            for i, msg in enumerate(dialogue):
+                if msg['role'] == 'assistant' and 'we are now moving to the next stage' in msg['content'].lower():
+                    stage_2_start_index = i + 1
+            
+            stage_2_messages = dialogue[stage_2_start_index:]
+            user_messages_in_stage = [msg for msg in stage_2_messages if msg['role'] == 'user']
+            
+            # If we have 3 or more user messages in this stage, advance to next stage
+            if len(user_messages_in_stage) >= 12 and not summary.get("move_to_next", False):
+                summary["move_to_next"] = True
+                if "rationale" in summary:
+                    summary["rationale"] += " Moved to next stage after 3 turns of conversation."
+                else:
+                    summary["rationale"] = "Moved to next stage after 3 turns of conversation."
+            
+            return json.dumps(summary)
+        except json.JSONDecodeError:
+            # Fallback in case of parsing error
+            return json.dumps({
+                "stress_level": "Moderate",
+                "user_emotion": "Unknown",
+                "eligible_for_therapy": True,
+                "move_to_next": len(user_messages_in_stage) >= 3,
+                "rationale": "Error parsing response, moving to next stage based on conversation length."
+            })

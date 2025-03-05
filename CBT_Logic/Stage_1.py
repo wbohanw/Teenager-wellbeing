@@ -3,6 +3,7 @@ import json
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+import re
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
@@ -72,7 +73,6 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
         - Otherwise, set to `false`.
 
         Example:
-
         Input:
         [
             {"role": "assistant", "content": "你今天想聊些什么呢?"},
@@ -80,7 +80,6 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
             {"role": "assistant", "content": "被同学欺负了，为什么呢？"},
             {"role": "user", "content": "我现在心情很糟糕，很压抑"}
         ]
-
         Output:
         {
             "stress_level": "high",
@@ -89,7 +88,6 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
             "move_to_next": true,
             "rationale": "The user expressed a key episode of being bullied, and their emotions of feeling very down and oppressed were clearly identified."
         }
-
         """,
         gpt_params={"temperature": 0.1},
         dialogue_filter=lambda dialogue, _: dialogue[-5:]
@@ -105,13 +103,15 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
                 model="gpt-4o-mini",
                 messages=[{"role": "system", "content": prompt}]
             )
-            print(response)
-            summary = json.loads(response.choices[0].message.content)
+            output = response.choices[0].message.content
+            output = re.sub(r"```jsonl\s*|```", "", output).strip()
+            summary = json.loads(output)
             required_fields = ["stress_level", "user_emotion", "eligible_for_therapy", "move_to_next", "rationale"]
             for field in required_fields:
                 if field not in summary:
                     summary[field] = "Unknown" if field != "move_to_next" else False
-            if len(dialogue) > 3 and not summary["move_to_next"]:
+                    
+            if len(dialogue) > 6 and not summary["move_to_next"]:
                 summary["move_to_next"] = True
                 summary["rationale"] += " Moved to next stage due to conversation length."
             
