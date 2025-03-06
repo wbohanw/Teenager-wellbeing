@@ -48,16 +48,12 @@ def chat():
         
         chatbot = get_chatbot_session(user_id)
         response = chatbot.chat(user_message)
-        full_response = response.split("\n\n")
-        text = full_response[0]
-        stage = full_response[1]
         alert_message = chatbot.alert(user_message)
         
         stage_progress = chatbot.get_stage_progress()
         
         return jsonify({
-            'response': text,
-            'stage': stage,
+            'response': response,
             'alert': alert_message if alert_message else None,
             'stage_progress': stage_progress
         })
