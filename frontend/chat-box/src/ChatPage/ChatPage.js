@@ -1,13 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./ChatPage.css";
-import miloImg from "../images/milo.png";
 import { sendMessageToChatbot } from "../connector";
 
 function ChatPage() {
+  const getRandomVideo = () => {
+    const videos = ["welcome1.mp4", "welcome2.mp4", "welcome3.mp4"];
+    const randomIndex = Math.floor(Math.random() * videos.length);
+    return require(`../videos/${videos[randomIndex]}`);
+  };
+
   const [messages, setMessages] = useState([
     { text: "你好，我是Milo, 今天感觉怎么样？", sender: "bot" },
   ]);
   const [inputText, setInputText] = useState("");
+  const [videoSrc, setVideoSrc] = useState(getRandomVideo());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVideoSrc(getRandomVideo());
+    }, 5000); // Change video every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const sendMessage = async () => {
     if (inputText.trim() === "") return;
@@ -26,7 +40,6 @@ function ChatPage() {
     }
   };
 
-    
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
       event.preventDefault(); 
@@ -38,7 +51,14 @@ function ChatPage() {
     <div className="chat-container">
       <div className="character-panel">
         <h2>Good Morning, Jane 👋</h2>
-        <img src={miloImg} alt="Milo" className="milo-image" />
+        <video 
+          className="milo-video"
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          src={videoSrc}
+        />
         <p>Milo</p>
       </div>
 
@@ -65,6 +85,16 @@ function ChatPage() {
             </svg>
           </button>
         </div>
+      </div>
+
+      <div className="button-container">
+        <button className="absolute-button">Random action</button>
+        <button className="absolute-button">Action welcome</button>
+        <button className="absolute-button">Action happy</button>
+        <button className="absolute-button">Action hug</button>
+        <button className="absolute-button">Action wait</button>
+        <button className="absolute-button">Action nod</button>
+        <button className="absolute-button">Action idle</button>
       </div>
     </div>
   );

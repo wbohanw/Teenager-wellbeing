@@ -139,5 +139,24 @@
 .chat-input button:hover {
     background: #5F7035;
 }
+.button-container {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
 
-  
+.absolute-button {
+    background: #778F46;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.absolute-button:hover {
+    background: #5F7035;
+}
