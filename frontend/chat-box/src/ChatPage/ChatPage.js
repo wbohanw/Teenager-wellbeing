@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from "react";
 import "./ChatPage.css";
 import { sendMessageToChatbot } from "../connector";
+import welcome from "../videos/welcome.mov";
+import random from "../videos/random.mov";
+import hug from "../videos/hug.mov"; // Import the hug video
 
 function ChatPage() {
-  const getRandomVideo = () => {
-    const videos = ["welcome1.mp4", "welcome2.mp4", "welcome3.mp4"];
-    const randomIndex = Math.floor(Math.random() * videos.length);
-    return require(`../videos/${videos[randomIndex]}`);
-  };
-
   const [messages, setMessages] = useState([
     { text: "你好，我是Milo, 今天感觉怎么样？", sender: "bot" },
   ]);
   const [inputText, setInputText] = useState("");
-  const [videoSrc, setVideoSrc] = useState(getRandomVideo());
+  const [videoSrc, setVideoSrc] = useState(welcome);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVideoSrc(getRandomVideo());
-    }, 5000); // Change video every 10 seconds
+    const timer = setTimeout(() => {
+      setVideoSrc(random);
+    }, 5000); // Change video after 10 seconds
 
-    return () => clearInterval(interval);
+    return () => clearTimeout(timer); // Cleanup the timer on component unmount
   }, []);
 
   const sendMessage = async () => {
@@ -47,18 +44,29 @@ function ChatPage() {
     }
   };
 
+  const handleHugAction = () => {
+    setVideoSrc(hug);
+    setTimeout(() => {
+      setVideoSrc(random);
+    }, 6000); // Switch back to random video after 10 seconds
+  };
+
   return (
     <div className="chat-container">
       <div className="character-panel">
         <h2>Good Morning, Jane 👋</h2>
-        <video 
-          className="milo-video"
-          autoPlay 
-          loop 
-          muted 
-          playsInline
-          src={videoSrc}
-        />
+        {videoSrc ? (
+          <video 
+            className="milo-video"
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            src={videoSrc}
+          />
+        ) : (
+          <div className="milo-video" style={{ backgroundColor: 'transparent' }}></div>
+        )}
         <p>Milo</p>
       </div>
 
@@ -91,7 +99,7 @@ function ChatPage() {
         <button className="absolute-button">Random action</button>
         <button className="absolute-button">Action welcome</button>
         <button className="absolute-button">Action happy</button>
-        <button className="absolute-button">Action hug</button>
+        <button className="absolute-button" onClick={handleHugAction}>Action hug</button>
         <button className="absolute-button">Action wait</button>
         <button className="absolute-button">Action nod</button>
         <button className="absolute-button">Action idle</button>
