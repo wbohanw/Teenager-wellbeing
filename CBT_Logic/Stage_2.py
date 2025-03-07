@@ -18,6 +18,9 @@ class ExploreFormulationStage(ChatGPTResponseGenerator):
     Your task: Explore the patient's past experiences and gain comprehensive insights into their cognitive patterns and problems.
     Please always remember the patient is a teenager, who is 12-18 years old. 
     
+    ** If you have already have already detected issues from the chat history and the emotions, no need to repeat asking same question, and move forward asking more details.
+
+
     Guidelines:
     - Ask open-ended questions to encourage the patient to share more about their experiences.
     - Focus on understanding the patient's thought processes, beliefs, and behaviors.
@@ -114,7 +117,7 @@ class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
             summary = json.loads(response.choices[0].message.content)
             
             # If we have 3 or more user messages in this stage, advance to next stage
-            if len(user_messages_in_stage) >= 12 and not summary.get("move_to_next", False):
+            if len(user_messages_in_stage) >= 6 and not summary.get("move_to_next", False):
                 summary["move_to_next"] = True
                 if "rationale" in summary:
                     summary["rationale"] += " Moved to next stage after 3 turns of conversation."

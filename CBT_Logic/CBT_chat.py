@@ -27,11 +27,15 @@ class CBTChatbot:
             (InformationGatheringStage(), InformationGatheringSummarizer()),
             (TherapyImplementationStage(), TherapyImplementationSummarizer()),
         ]
+        self.user_emotion = None
         self.conversation_history: List[Dict[str, str]] = []
         self.chosen_therapy = None
         self.therapy_rationale = None
         self.scheduler = TherapyScheduler()
         self.user_id = None
+        self.click = False
+        self.suggestion = None
+        self.end_session = False
 
     def chat(self, user_input: str) -> str:
         if self.agent.current_stage < 3:
@@ -39,6 +43,8 @@ class CBTChatbot:
         elif self.agent.current_stage == 3 and self.chosen_therapy is None:
             return self.route_therapy(user_input)
         else:
+            self.click = False
+            self.end_session = True
             return self.process_rag_advice(user_input)
 
     def process_chosen_therapy(self, user_input: str) -> str:
@@ -71,29 +77,30 @@ class CBTChatbot:
         self.conversation_history.append({"role": "assistant", "content": response})
         
         summary_json = current_summarizer.summarize(self.conversation_history)
-        print(summary_json)
         summary = json.loads(summary_json)
         print(summary)
+        self.user_emotion = summary.get('user_emotion', 'Unknown')
         
     
         if summary.get("move_to_next", "True"):
-            print("真的假的！！！！！")
             self.agent.advance_stage()
             if self.agent.current_stage == 3:
                 return self.therapy_router.route(self.conversation_history)
-            else:
-                response += f"\n\nWe're now moving to the next stage: {self.agent.get_current_stage()}"
+            # else:
+            #     response += f"\n\nWe're now moving to the next stage: {self.agent.get_current_stage()}"
         
         return response
 
+        
     def route_therapy(self, user_input: str) -> str:
         self.chosen_therapy, self.therapy_rationale = self.therapy_router.route(self.conversation_history)
-        response = self.therapy_rationale
+        # response = self.therapy_rationale
         # response = f"Based on our conversation, I think {self.chosen_therapy} might be the most helpful approach for you. {self.therapy_rationale}\n\nLet's continue with this approach. How do you feel about that?"
         self.conversation_history.append({"role": "user", "content": user_input})
-        self.conversation_history.append({"role": "assistant", "content": response})
-        self.agent.advance_stage() 
-        return response
+        self.conversation_history.append({"role": "assistant", "content": self.therapy_rationale})
+        self.agent.advance_stage()
+        self.click = True
+        return self.chat(user_input)
 
     def process_rag_advice(self, user_input: str) -> str:
         current_stage, current_summarizer = self.stages[3]  # RAGAdviceStage
@@ -108,6 +115,7 @@ class CBTChatbot:
         if summary.get('retrieve_new_advice', False):
             response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy)
             self.conversation_history.append({"role": "assistant", "content": response})
+            self.end_session = True
         
         if not summary.get('continue_session', True):
             return "Our therapy sessions have come to an end. I hope you've found them helpful. Remember to practice the techniques we've discussed. If you need further support in the future, don't hesitate to seek help."
@@ -133,7 +141,6 @@ class CBTChatbot:
         return self.agent.get_stage_progress()
 
     def complete_session(self):
-        """Called when ending a therapy session"""
         if self.user_id and self.chosen_therapy:
             follow_up_message = self.scheduler.schedule_follow_up(
                 self.user_id,

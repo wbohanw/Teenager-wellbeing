@@ -21,6 +21,8 @@ here is the chat_history: {self.conversation_history}
 Say hi! Your goal is to build trust with the teenager and assess their eligibility for therapy. ask them to how the life is going.
 Please always remember the patient is a teenager, who is 12-18 years old. 
 
+** If you have already introduced yourself and have already detected issues from the chat history, no need to repeat yourself, and move forward asking more details.
+
 [Intro Task]
 {%- if locale == 'Ch' %}
 - Mention that your Chinese might be a bit awkward since you recently started learning the language.
@@ -95,33 +97,24 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
         
     def summarize(self, dialogue: List[Dict[str, str]]) -> str:
         prompt = f"{self.base_instruction}\n\nDialogue:\n"
-        for turn in dialogue[-10:]:  # Consider last 5 turns
+        for turn in dialogue[-5:]:  # Consider last 5 turns
             prompt += f"{turn['role'].capitalize()}: {turn['content']}\n"
         prompt += "\nSummary:"
-        try:
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "system", "content": prompt}]
-            )
-            output = response.choices[0].message.content
-            output = re.sub(r"```jsonl\s*|```", "", output).strip()
-            summary = json.loads(output)
-            required_fields = ["stress_level", "user_emotion", "eligible_for_therapy", "move_to_next", "rationale"]
-            for field in required_fields:
-                if field not in summary:
-                    summary[field] = "Unknown" if field != "move_to_next" else False
-                    
-            if len(dialogue) > 6 and not summary["move_to_next"]:
-                summary["move_to_next"] = True
-                summary["rationale"] += " Moved to next stage due to conversation length."
-            
-            return json.dumps(summary)
-        except json.JSONDecodeError:
-            print("Error: Invalid JSON format in summary")
-            return {
-                "stress_level": "Unknown",
-                "user_emotion": "Unknown",
-                "eligible_for_therapy": False,
-                "move_to_next": False,
-                "rationale": "Error in parsing AI response"
-            }
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": prompt}]
+        )
+        output = response.choices[0].message.content
+        output = re.sub(r"```jsonl\s*|```", "", output).strip()
+        summary = json.loads(output)
+        required_fields = ["stress_level", "user_emotion", "eligible_for_therapy", "move_to_next", "rationale"]
+        for field in required_fields:
+            if field not in summary:
+                summary[field] = "Unknown" if field != "move_to_next" else False
+                
+        if len(dialogue) > 6 and not summary["move_to_next"]:
+            summary["move_to_next"] = True
+            summary["rationale"] += " Moved to next stage due to conversation length."
+        
+        return json.dumps(summary)
+        

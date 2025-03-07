@@ -48,14 +48,17 @@ def chat():
         
         chatbot = get_chatbot_session(user_id)
         response = chatbot.chat(user_message)
-        alert_message = chatbot.alert(user_message)
+        alert_message = chatbot.alert_agent.analyze_conversation(user_message, chatbot.conversation_history)
         
         stage_progress = chatbot.get_stage_progress()
+
         
         return jsonify({
             'response': response,
             'alert': alert_message if alert_message else None,
-            'stage_progress': stage_progress
+            'user_emotion': chatbot.user_emotion,
+            'stage_progress': stage_progress,
+            'click': chatbot.click
         })
     except Exception as e:
         print(f"Error in chat endpoint: {e}")
@@ -69,11 +72,12 @@ def chat_get(message):
     user_id = 'default_user'
     chatbot = get_chatbot_session(user_id)
     response = chatbot.chat(message)
-    alert_message = chatbot.alert(message)
+    alert_message = chatbot.alert(message,chatbot.conversation_history)
     stage_progress = chatbot.get_stage_progress()
     
     return jsonify({
         'response': response,
+        'user_emotion': chatbot.user_emotion,
         'alert': alert_message if alert_message else None,
         'stage_progress': stage_progress
     })
