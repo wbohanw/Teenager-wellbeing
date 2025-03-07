@@ -101,19 +101,17 @@ class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
             messages=[{"role": "system", "content": prompt}]
         )
         
+        # Calculate stage messages BEFORE try block
+        stage_2_start_index = 0
+        for i, msg in enumerate(dialogue):
+            if msg['role'] == 'assistant' and 'we are now moving to the next stage' in msg['content'].lower():
+                stage_2_start_index = i + 1
+        
+        stage_2_messages = dialogue[stage_2_start_index:]
+        user_messages_in_stage = [msg for msg in stage_2_messages if msg['role'] == 'user']
+        
         try:
             summary = json.loads(response.choices[0].message.content)
-            
-            # Count user messages in stage 2
-            # We need to determine which messages belong to stage 2
-            # Let's assume all messages after the last stage transition are in the current stage
-            stage_2_start_index = 0
-            for i, msg in enumerate(dialogue):
-                if msg['role'] == 'assistant' and 'we are now moving to the next stage' in msg['content'].lower():
-                    stage_2_start_index = i + 1
-            
-            stage_2_messages = dialogue[stage_2_start_index:]
-            user_messages_in_stage = [msg for msg in stage_2_messages if msg['role'] == 'user']
             
             # If we have 3 or more user messages in this stage, advance to next stage
             if len(user_messages_in_stage) >= 12 and not summary.get("move_to_next", False):
@@ -130,6 +128,6 @@ class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
                 "stress_level": "Moderate",
                 "user_emotion": "Unknown",
                 "eligible_for_therapy": True,
-                "move_to_next": len(user_messages_in_stage) >= 3,
+                "move_to_next": len(user_messages_in_stage) >= 3,  # Now safely accessible
                 "rationale": "Error parsing response, moving to next stage based on conversation length."
             })

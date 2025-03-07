@@ -101,22 +101,20 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
             messages=[{"role": "system", "content": prompt}]
         )
         
+        # Calculate stage messages BEFORE try block
+        stage_3_start_index = 0
+        stage_transitions = 0
+        for i, msg in enumerate(dialogue):
+            if msg['role'] == 'assistant' and 'moving to the next stage' in msg['content'].lower():
+                stage_transitions += 1
+                if stage_transitions == 2:  # After second transition, we're in stage 3
+                    stage_3_start_index = i + 1
+        
+        stage_3_messages = dialogue[stage_3_start_index:]
+        user_messages_in_stage = [msg for msg in stage_3_messages if msg['role'] == 'user']
+        
         try:
             summary = json.loads(response.choices[0].message.content)
-            
-            # Count user messages in stage 3
-            # First, find where stage 3 starts
-            stage_3_start_index = 0
-            stage_transitions = 0
-            
-            for i, msg in enumerate(dialogue):
-                if msg['role'] == 'assistant' and 'moving to the next stage' in msg['content'].lower():
-                    stage_transitions += 1
-                    if stage_transitions == 2:  # After second transition, we're in stage 3
-                        stage_3_start_index = i + 1
-            
-            stage_3_messages = dialogue[stage_3_start_index:]
-            user_messages_in_stage = [msg for msg in stage_3_messages if msg['role'] == 'user']
             
             # If we have 3 or more user messages in this stage, advance to next stage
             if len(user_messages_in_stage) >= 20 and not summary.get("move_to_next", False):
