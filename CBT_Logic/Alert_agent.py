@@ -14,16 +14,15 @@ class AlertAgent:
         openai.api_key = self.api_key
         self.self_harm_count = 0
         self.base_instruction = """
-        You are an AI assistant tasked with monitoring a conversation for signs of severe mental health issues, particularly suicidal ideation or behavior. Analyze the following conversation and determine if there are any concerning signs that require immediate professional intervention.
+        You are an AI assistant tasked with monitoring a conversation for signs of extreme dangerous issues, particularly suicidal ideation or behavior. Analyze the following conversation and determine if there are any concerning signs that require immediate professional intervention.
 
         If you detect any of the following:
         1. Explicit mentions of suicide or self-harm
         2. Giving away possessions
-        3. Expressing feelings of hopelessness or being trapped
-        4. Talking about being a burden to others
-        5. Increased isolation or withdrawal
-        6. Extreme mood swings
-        7. Talking about having no reason to live
+        3. Talking about being a burden to others
+        4. Increased isolation or withdrawal
+        5. Extreme mood swings
+        6. Talking about having no reason to live
 
         Then respond with a JSON object in the following format:
         {
@@ -36,6 +35,7 @@ class AlertAgent:
             "alert": false,
             "reason": null
         }
+        Note: Be more careful about the emotion, just alert for extreme issues, and do not respond with anything other than the JSON object.
         """
 
     def analyze_conversation(self, user_input: str, conversation_history: List[Dict[str, str]]) -> Dict:

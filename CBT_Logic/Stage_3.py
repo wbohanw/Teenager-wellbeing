@@ -27,6 +27,8 @@ Guidelines:
 - Ask only one question at a time to avoid overwhelming the teenager.
 - Be empathetic and non-judgmental in your responses.
 
+** If you have already have already detected issues from the chat history and the emotions, no need to repeat asking same question, and move forward asking more details.
+
 Example prompts:
 - "Can you tell me more about how you typically handle stressful situations?"
 - "How would you describe your relationships with family and friends?"
@@ -117,7 +119,7 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
             summary = json.loads(response.choices[0].message.content)
             
             # If we have 3 or more user messages in this stage, advance to next stage
-            if len(user_messages_in_stage) >= 20 and not summary.get("move_to_next", False):
+            if len(user_messages_in_stage) >= 6 and not summary.get("move_to_next", False):
                 summary["move_to_next"] = True
                 if "rationale" in summary:
                     summary["rationale"] += " Moved to next stage after 3 turns of conversation."
