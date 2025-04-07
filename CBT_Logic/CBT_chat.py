@@ -165,6 +165,31 @@ class CBTChatbot:
                 f"we've discussed. {follow_up_message}"
             )
 
+    def update_preferences(self, preferences):
+        """
+        Update the chatbot's behavior based on user preferences
+        """
+        # Store preferences for use in prompts
+        self.preferences = preferences
+        
+        # You can use these preferences in your prompt building
+        # For example, when constructing the system prompt:
+        if hasattr(self, 'preferences') and self.preferences:
+            personality_traits = self.preferences.get('personalityTraits', [])
+            tone = self.preferences.get('tone', '')
+            
+            # Adjust the system prompt based on preferences
+            personality_desc = ""
+            if personality_traits:
+                personality_desc = f"You have the following personality traits: {', '.join(personality_traits)}. "
+            
+            tone_desc = ""
+            if tone:
+                tone_desc = f"Your tone should be {tone}. "
+                
+            # Add these to your system prompt
+            # self.system_prompt += personality_desc + tone_desc
+
     
 if __name__ == "__main__":
     # Test case

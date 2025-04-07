@@ -1,0 +1,221 @@
+.preferences-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background-color: var(--bg-primary, #fff);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.preferences-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.preferences-header h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  color: var(--primary-color, #4a7bf3);
+}
+
+.preferences-header p {
+  color: var(--text-secondary, #666);
+  font-size: 1.1rem;
+}
+
+.preferences-section {
+  background-color: var(--bg-secondary, #f8f9fa);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.toggle-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 30px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.toggle input:checked + .toggle-slider {
+  background-color: var(--primary-color, #4a7bf3);
+}
+
+.toggle input:checked + .toggle-slider:before {
+  transform: translateX(30px);
+}
+
+.preferences-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.preference-group {
+  margin-bottom: 20px;
+}
+
+.preference-group h3 {
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.input-with-button {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-button input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.search-button {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.search-button svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-secondary, #666);
+}
+
+.option-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.option-button {
+  padding: 8px 16px;
+  background-color: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.option-button.selected {
+  background-color: var(--primary-light, #e6efff);
+  border-color: var(--primary-color, #4a7bf3);
+  color: var(--primary-color, #4a7bf3);
+}
+
+.trait-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.trait-button {
+  padding: 8px 16px;
+  background-color: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.trait-button.selected {
+  background-color: var(--primary-light, #e6efff);
+  border-color: var(--primary-color, #4a7bf3);
+  color: var(--primary-color, #4a7bf3);
+}
+
+.preferences-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.start-chat-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: var(--primary-color, #4a7bf3);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.start-chat-button:hover {
+  background-color: var(--primary-dark, #3a5bcf);
+  transform: translateY(-2px);
+}
+
+.start-chat-button svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+@media (max-width: 768px) {
+  .preferences-container {
+    padding: 20px 16px;
+  }
+  
+  .option-buttons, .trait-options {
+    gap: 8px;
+  }
+  
+  .option-button, .trait-button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}

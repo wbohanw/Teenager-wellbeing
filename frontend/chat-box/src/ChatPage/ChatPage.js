@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./ChatPage.css";
-import { sendMessageToChatbot } from "../connector";
+import { sendMessageToChatbot, savePreferencesToBackend } from "../connector";
 import happy from "../videos/happy.mov";
 import sad from "../videos/sad.mov";
 import action2 from "../videos/action2.mp4";
@@ -14,6 +14,7 @@ import action9 from "../videos/action9.mp4";
 import action10 from "../videos/action10.mp4";
 import action11 from "../videos/action11.mp4";
 import action12 from "../videos/action12.mp4";
+import { useLocation } from "react-router-dom";
 
 function ChatPage() {
   // State
@@ -26,6 +27,19 @@ function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [preferences, setPreferences] = useState(
+    location.state?.preferences || JSON.parse(localStorage.getItem('chatPreferences')) || {}
+  );
+  
+  // Add these states for preferences
+  const [language, setLanguage] = useState(preferences.language || '');
+  const [purpose, setPurpose] = useState(preferences.purpose || '');
+  const [selectedTraits, setSelectedTraits] = useState(preferences.personalityTraits || []);
+  const [selectedTone, setSelectedTone] = useState(preferences.tone || '');
+  const [selectedTitle, setSelectedTitle] = useState(preferences.titlePreference || '');
+  const [selectedProperNouns, setSelectedProperNouns] = useState(preferences.properNouns || []);
   
   // Refs
   const chatEndRef = useRef(null);
@@ -46,6 +60,27 @@ function ChatPage() {
     idle: action8,
   };
 
+  // Add these constants for preferences options
+  const personalityTraits = [
+    'Openness', 'Closedness', 'Agreeable', 'Non-Agreeable', 'Conscientiousness', 'Unconscientiousness',
+    'Extroverted', 'Introverted', 'Optimistic', 'Pessimistic',
+    'Helpful', 'Attentive', 'Efficient', 'Intelligent', 'Guiding',
+    'Sensitive', 'Empathetic', 'Curious', 'Amusing', 'Supportive', 'Inquisitive',
+    'Funny', 'Unpredictable', 'Snarky', 'Cute', 'Weird', 'Unusual', 'Charismatic', 'Bold', 'Creative',
+    'Calm', 'Collected', 'Supportive', 'Caring', 'Non-judgmental', 'Motivational',
+    'Predictive', 'Co-operative', 'Task Orientated', 'Competent', 'Cooperative'
+  ];
+
+  const tones = [
+    'Formal', 'Casual', 'Imperative', 'Interrogative', 'Non-continuous Conversation', 'Relationship-oriented'
+  ];
+
+  const titles = [
+    'Personal and Informal Titles', 'Professional and Formal Titles', 'Avoiding Use of Titles'
+  ];
+
+  const properNouns = ['내가', '제가'];
+  
   // Initialize default video cycle
   useEffect(() => {
     startDefaultCycle();
@@ -158,6 +193,43 @@ function ChatPage() {
     }
   };
 
+  // Add these handlers for preferences
+  const handleTraitToggle = (trait) => {
+    if (selectedTraits.includes(trait)) {
+      setSelectedTraits(selectedTraits.filter(t => t !== trait));
+    } else {
+      setSelectedTraits([...selectedTraits, trait]);
+    }
+  };
+
+  const handleProperNounToggle = (noun) => {
+    if (selectedProperNouns.includes(noun)) {
+      setSelectedProperNouns(selectedProperNouns.filter(n => n !== noun));
+    } else {
+      setSelectedProperNouns([...selectedProperNouns, noun]);
+    }
+  };
+  
+  const savePreferences = async () => {
+    const newPreferences = {
+      language,
+      purpose,
+      personalityTraits: selectedTraits,
+      tone: selectedTone,
+      titlePreference: selectedTitle,
+      properNouns: selectedProperNouns
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('chatPreferences', JSON.stringify(newPreferences));
+    setPreferences(newPreferences);
+    
+    // Send to backend
+    await savePreferencesToBackend(newPreferences);
+    
+    setShowPreferences(false);
+  };
+
   // Send message to chatbot
   const sendMessage = async () => {
     if (inputText.trim() === "") return;
@@ -179,8 +251,8 @@ function ChatPage() {
     setIsTyping(true);
     playSpecificVideo('waiting');
 
-    // Get response from chatbot
-    const response = await sendMessageToChatbot(inputText);
+    // Get response from chatbot - Add preferences to the request
+    const response = await sendMessageToChatbot(inputText, preferences);
     setIsTyping(false);
     
     if (response.response) {
@@ -254,6 +326,14 @@ function ChatPage() {
           <a href="#" className="nav-link">Profile</a>
           <a href="#" className="nav-link">Settings</a>
           <a href="#" className="nav-link">Help</a>
+          
+          {/* Add this button to open preferences */}
+          <button className="nav-link preferences-btn" onClick={() => setShowPreferences(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+            </svg>
+            Preferences
+          </button>
         </div>
         
         <button className="theme-toggle" onClick={toggleDarkMode}>
@@ -317,6 +397,122 @@ function ChatPage() {
               </svg>
               Help
             </a>
+          </div>
+        </div>
+      )}
+
+      {/* Preferences Popup */}
+      {showPreferences && (
+        <div className="preferences-overlay">
+          <div className="preferences-popup">
+            <div className="preferences-header">
+              <h2>Chat Preferences</h2>
+              <button className="close-preferences" onClick={() => setShowPreferences(false)}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="preferences-content">
+              <div className="toggle-section">
+                <label className="toggle">
+                  <input type="checkbox" checked={true} readOnly />
+                  <span className="toggle-slider"></span>
+                </label>
+                <span>Verbal Style Cues</span>
+              </div>
+              
+              <div className="preference-group">
+                <h3>Language</h3>
+                <div className="input-with-button">
+                  <input
+                    type="text"
+                    placeholder="Please enter"
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="preference-group">
+                <h3>Conversation Purpose</h3>
+                <div className="input-with-button">
+                  <input
+                    type="text"
+                    placeholder="Please enter"
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="preference-group">
+                <h3>Titles</h3>
+                <div className="option-buttons">
+                  {titles.map((title) => (
+                    <button
+                      key={title}
+                      className={`option-button ${selectedTitle === title ? 'selected' : ''}`}
+                      onClick={() => setSelectedTitle(title)}
+                    >
+                      {title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="preference-group">
+                <h3>Proper Nouns</h3>
+                <div className="option-buttons">
+                  {properNouns.map((noun) => (
+                    <button
+                      key={noun}
+                      className={`option-button ${selectedProperNouns.includes(noun) ? 'selected' : ''}`}
+                      onClick={() => handleProperNounToggle(noun)}
+                    >
+                      {noun}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="preference-group">
+                <h3>Personality Traits</h3>
+                <div className="trait-options">
+                  {personalityTraits.map((trait) => (
+                    <button 
+                      key={trait} 
+                      className={`trait-button ${selectedTraits.includes(trait) ? 'selected' : ''}`}
+                      onClick={() => handleTraitToggle(trait)}
+                    >
+                      {trait}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="preference-group">
+                <h3>Tone</h3>
+                <div className="option-buttons">
+                  {tones.map((tone) => (
+                    <button
+                      key={tone}
+                      className={`option-button ${selectedTone === tone ? 'selected' : ''}`}
+                      onClick={() => setSelectedTone(tone)}
+                    >
+                      {tone}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="preferences-actions">
+              <button className="save-preferences" onClick={savePreferences}>
+                Save Preferences
+              </button>
+            </div>
           </div>
         </div>
       )}
