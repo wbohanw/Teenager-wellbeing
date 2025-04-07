@@ -46,10 +46,19 @@ def chat():
             
         user_message = data['message']
         user_id = data.get('user_id', 'default_user')
+        preferences = data.get('preferences', {})
         
         print(f"Received message from user {user_id}: {user_message}")
         
         chatbot = get_chatbot_session(user_id)
+        
+        # Apply preferences if provided
+        if preferences:
+            print("\n===== USER PREFERENCES =====")
+            print(json.dumps(preferences, indent=4))
+            print("=============================\n")
+            chatbot.update_preferences(preferences)
+            
         try:
             response = chatbot.chat(user_message)
             alert_message = chatbot.alert_agent.analyze_conversation(user_message, chatbot.conversation_history)
@@ -182,6 +191,33 @@ def not_found(error):
 @app.errorhandler(500)
 def server_error(error):
     return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/preferences', methods=['POST'])
+def save_preferences():
+    try:
+        preferences = request.json
+        
+        # Print the preferences to the console
+        print("\n===== USER PREFERENCES =====")
+        print(json.dumps(preferences, indent=4))
+        print("=============================\n")
+        
+        # Store preferences in user session if needed
+        user_id = request.args.get('user_id', 'default_user')
+        if user_id in user_sessions:
+            chatbot = user_sessions[user_id]
+            chatbot.update_preferences(preferences)
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Preferences saved successfully'
+        })
+    except Exception as e:
+        print(f"Error saving preferences: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

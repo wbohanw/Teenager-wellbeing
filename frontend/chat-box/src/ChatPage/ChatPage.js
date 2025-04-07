@@ -39,7 +39,7 @@ function ChatPage() {
   const [selectedTraits, setSelectedTraits] = useState(preferences.personalityTraits || []);
   const [selectedTone, setSelectedTone] = useState(preferences.tone || '');
   const [selectedTitle, setSelectedTitle] = useState(preferences.titlePreference || '');
-  const [selectedProperNouns, setSelectedProperNouns] = useState(preferences.properNouns || []);
+  const [selectedProperNoun, setSelectedProperNoun] = useState(preferences.properNoun || '');
   
   // Refs
   const chatEndRef = useRef(null);
@@ -79,7 +79,7 @@ function ChatPage() {
     'Personal and Informal Titles', 'Professional and Formal Titles', 'Avoiding Use of Titles'
   ];
 
-  const properNouns = ['내가', '제가'];
+  const properNouns = ['him/his', 'her/she'];
   
   // Initialize default video cycle
   useEffect(() => {
@@ -202,12 +202,8 @@ function ChatPage() {
     }
   };
 
-  const handleProperNounToggle = (noun) => {
-    if (selectedProperNouns.includes(noun)) {
-      setSelectedProperNouns(selectedProperNouns.filter(n => n !== noun));
-    } else {
-      setSelectedProperNouns([...selectedProperNouns, noun]);
-    }
+  const handleProperNounSelect = (noun) => {
+    setSelectedProperNoun(noun);
   };
   
   const savePreferences = async () => {
@@ -217,7 +213,7 @@ function ChatPage() {
       personalityTraits: selectedTraits,
       tone: selectedTone,
       titlePreference: selectedTitle,
-      properNouns: selectedProperNouns
+      properNoun: selectedProperNoun
     };
     
     // Save to localStorage
@@ -468,8 +464,8 @@ function ChatPage() {
                   {properNouns.map((noun) => (
                     <button
                       key={noun}
-                      className={`option-button ${selectedProperNouns.includes(noun) ? 'selected' : ''}`}
-                      onClick={() => handleProperNounToggle(noun)}
+                      className={`option-button ${selectedProperNoun === noun ? 'selected' : ''}`}
+                      onClick={() => handleProperNounSelect(noun)}
                     >
                       {noun}
                     </button>
