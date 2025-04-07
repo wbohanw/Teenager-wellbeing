@@ -13,13 +13,9 @@ from typing import List, Dict
 
 class AssessmentStage(ChatGPTResponseGenerator):
     def __init__(self):
-        super().__init__(
-        base_instruction="""
-if the user is in using Chinese, please give the response in Chinse as well. 
-Your role: Your name is Milo, introduce yourself as a peer to provide support and self-management advice, and you are talking with a teenager who has mental issues .
-here is the chat_history: {self.conversation_history}
-Say hi! Your goal is to build trust with the teenager and assess their eligibility for therapy. ask them to how the life is going.
-Please always remember the patient is a teenager, who is 12-18 years old. 
+        self.base_instruction = """
+if the user is in using Chinese, please give the response in Chinese as well. 
+Your role: Your name is Milo, introduce yourself as a peer to provide support and self-management advice, and you are talking with a teenager who has mental issues.
 
 ** If you have already introduced yourself and have already detected issues from the chat history, no need to repeat yourself, and move forward asking more details.
 
@@ -37,17 +33,29 @@ Please always remember the patient is a teenager, who is 12-18 years old.
 - Once a solid rapport is established, and the user feels engaged, transition smoothly to the next stage.
 
 [Response Guidelines]
-- based on the conversation history, provide detailed and informative responses.
+- Based on the conversation history, provide detailed and informative responses.
 - Use the conversation history to avoid repeating questions or topics already discussed.
 - Progress the conversation by building on previous responses and information shared by the user.
 
 Note: answer a question at a time! Do not overwhelm the user.
 """
-)
+
     def process(self, user_input: str) -> str:
-        prompt = f"{self.base_instruction}\n\nUser: {user_input}\n\nTherapist:"
-        response = client.chat.completions.create(model="gpt-4o-mini",
-        messages=[{"role": "system", "content": prompt}])
+        # Format conversation history into a string
+        history_str = ""
+        if hasattr(self, 'conversation_history') and self.conversation_history:
+            history_str = "\nPrevious conversation:\n"
+            for msg in self.conversation_history[-5:]:  # Show last 5 messages
+                history_str += f"{msg['role'].capitalize()}: {msg['content']}\n"
+        
+        prompt = f"{self.base_instruction}\n{history_str}\nUser: {user_input}\nTherapist:"
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": self.base_instruction},
+                {"role": "user", "content": f"{history_str}\nUser: {user_input}"}
+            ]
+        )
         return response.choices[0].message.content
 
 

@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from CBT_chat import CBTChatbot
 import datetime
+import json
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -46,25 +47,46 @@ def chat():
         user_message = data['message']
         user_id = data.get('user_id', 'default_user')
         
+        print(f"Received message from user {user_id}: {user_message}")
+        
         chatbot = get_chatbot_session(user_id)
-        response = chatbot.chat(user_message)
-        alert_message = chatbot.alert_agent.analyze_conversation(user_message, chatbot.conversation_history)
-        
-        stage_progress = chatbot.get_stage_progress()
-
-        
-        return jsonify({
-            'response': response,
-            'alert': alert_message if alert_message else None,
-            'user_emotion': chatbot.user_emotion,
-            'stage_progress': stage_progress,
-            'click': chatbot.click
-        })
+        try:
+            response = chatbot.chat(user_message)
+            alert_message = chatbot.alert_agent.analyze_conversation(user_message, chatbot.conversation_history)
+            stage_progress = chatbot.get_stage_progress()
+            
+            print(f"Generated response: {response}")
+            
+            return jsonify({
+                'response': response,
+                'alert': alert_message if alert_message else None,
+                'user_emotion': chatbot.user_emotion,
+                'stage_progress': stage_progress,
+                'click': chatbot.click
+            })
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error in chatbot response: {e}")
+            return jsonify({
+                'status': 'error',
+                'error': 'Invalid JSON response from chatbot',
+                'details': str(e)
+            }), 500
+        except Exception as e:
+            print(f"Error in chatbot processing: {e}")
+            return jsonify({
+                'status': 'error',
+                'error': 'Error processing chatbot response',
+                'details': str(e)
+            }), 500
+            
     except Exception as e:
-        print(f"Error in chat endpoint: {e}")
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error in chat endpoint: {error_details}")
         return jsonify({
             'status': 'error',
-            'error': str(e)
+            'error': str(e),
+            'details': error_details
         }), 500
 
 @app.route('/chat/<message>', methods=['GET'])

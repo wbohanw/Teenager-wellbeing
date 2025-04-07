@@ -11,13 +11,18 @@ export async function sendMessageToChatbot(message, userId = "default_user") {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+            const errorData = await response.json();
+            console.error("Server error details:", errorData);
+            throw new Error(`HTTP error! Status: ${response.status}. Details: ${errorData.error || 'Unknown error'}`);
         }
 
         const data = await response.json();
         return data;
     } catch (error) {
         console.error("Error connecting to chatbot API:", error);
-        return { error: "Failed to connect to chatbot." };
+        return { 
+            error: "Failed to connect to chatbot.",
+            details: error.message
+        };
     }
 }

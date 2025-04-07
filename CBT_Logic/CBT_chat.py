@@ -76,18 +76,20 @@ class CBTChatbot:
         response = current_stage.process(user_input)
         self.conversation_history.append({"role": "assistant", "content": response})
         
-        summary_json = current_summarizer.summarize(self.conversation_history)
-        summary = json.loads(summary_json)
-        print(summary)
-        self.user_emotion = summary.get('user_emotion', 'Unknown')
-        
-    
-        if summary.get("move_to_next", "True"):
-            self.agent.advance_stage()
-            if self.agent.current_stage == 3:
-                return self.therapy_router.route(self.conversation_history)
-            # else:
-            #     response += f"\n\nWe're now moving to the next stage: {self.agent.get_current_stage()}"
+        try:
+            summary_json = current_summarizer.summarize(self.conversation_history)
+            summary = json.loads(summary_json)
+            print(f"Stage summary: {summary}")
+            self.user_emotion = summary.get('user_emotion', 'Unknown')
+            
+            if summary.get("move_to_next", "True"):
+                self.agent.advance_stage()
+                if self.agent.current_stage == 3:
+                    return self.therapy_router.route(self.conversation_history)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing summary JSON: {e}")
+            # Continue with default values if JSON parsing fails
+            self.user_emotion = 'Unknown'
         
         return response
 
