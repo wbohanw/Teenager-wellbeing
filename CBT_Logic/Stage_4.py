@@ -162,6 +162,8 @@ class TherapyImplementationSummarizer(ChatGPTDialogueSummarizer):
         (7) retrieve_new_advice: Boolean indicating whether new advice should be retrieved.
         (8) rationale: Explanation for the assessment and the decision to continue or conclude.
 
+        Remember to implement the suggestion by bullet points, like more illustrative to see
+
         Guidelines for `continue_session`:
         - Set to `true` if the teenager still needs additional support and engagement.
         - Set to `false` if they have reached a stable resolution or if further engagement is unnecessary.
@@ -197,16 +199,47 @@ class TherapyImplementationSummarizer(ChatGPTDialogueSummarizer):
         )
 
     def summarize(self, dialogue: List[Dict[str, str]], chosen_therapy: str) -> str:
-        prompt = f"{self.base_instruction}\n\nChosen Therapy: {chosen_therapy}\n\nDialogue:\n"
-        for turn in dialogue[-5:]:  # Consider last 5 turns
-            prompt += f"{turn['role'].capitalize()}: {turn['content']}\n"
-        prompt += "\nSummary:"
-        
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "system", "content": prompt}]
-        )
-        return response.choices[0].message.content
+        try:
+            # Get the raw response from the parent class
+            raw_response = super().summarize(dialogue, chosen_therapy)
+            
+            # Ensure the response is properly formatted as JSON
+            if not raw_response.strip().startswith('{'):
+                # If the response doesn't start with '{', try to extract JSON from it
+                import re
+                json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
+                if json_match:
+                    raw_response = json_match.group(0)
+                else:
+                    # If no JSON found, create a default response
+                    raw_response = json.dumps({
+                        "key_issues": [],
+                        "provided_advice": "",
+                        "user_response": "",
+                        "observed_changes": "",
+                        "areas_for_focus": [],
+                        "continue_session": True,
+                        "retrieve_new_advice": False,
+                        "rationale": "Unable to parse response, continuing session by default"
+                    })
+            
+            # Validate that the response is valid JSON
+            json.loads(raw_response)
+            return raw_response
+            
+        except Exception as e:
+            print(f"Error in TherapyImplementationSummarizer: {e}")
+            # Return a default valid JSON response
+            return json.dumps({
+                "key_issues": [],
+                "provided_advice": "",
+                "user_response": "",
+                "observed_changes": "",
+                "areas_for_focus": [],
+                "continue_session": True,
+                "retrieve_new_advice": False,
+                "rationale": f"Error occurred: {str(e)}"
+            })
     
 
 

@@ -111,16 +111,27 @@ class CBTChatbot:
         self.conversation_history.append({"role": "user", "content": user_input})
         self.conversation_history.append({"role": "assistant", "content": response})
         
-        summary_json = current_summarizer.summarize(self.conversation_history, self.chosen_therapy)
-        
-        summary = json.loads(summary_json)
-        if summary.get('retrieve_new_advice', False):
-            response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy)
-            self.conversation_history.append({"role": "assistant", "content": response})
-            self.end_session = True
-        
-        if not summary.get('continue_session', True):
-            return "Our therapy sessions have come to an end. I hope you've found them helpful. Remember to practice the techniques we've discussed. If you need further support in the future, don't hesitate to seek help."
+        try:
+            summary_json = current_summarizer.summarize(self.conversation_history, self.chosen_therapy)
+            if summary_json:
+                summary = json.loads(summary_json)
+                print(f"RAG advice summary: {summary}")
+                
+                if summary.get('retrieve_new_advice', False):
+                    response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy)
+                    self.conversation_history.append({"role": "assistant", "content": response})
+                    self.end_session = True
+                
+                if not summary.get('continue_session', True):
+                    return "Our therapy sessions have come to an end. I hope you've found them helpful. Remember to practice the techniques we've discussed. If you need further support in the future, don't hesitate to seek help."
+        except json.JSONDecodeError as e:
+            print(f"Error parsing RAG advice summary JSON: {e}")
+            # Continue with the current response if JSON parsing fails
+            pass
+        except Exception as e:
+            print(f"Error in RAG advice processing: {e}")
+            # Continue with the current response if any other error occurs
+            pass
         
         return response
         
