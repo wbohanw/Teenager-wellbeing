@@ -36,6 +36,36 @@ class CBTChatbot:
         self.click = False
         self.suggestion = None
         self.end_session = False
+        self.preferences = None
+
+    def update_preferences(self, preferences):
+        """Update the chatbot's preferences"""
+        self.preferences = preferences
+        print(f"Updated preferences for user {self.user_id}: {preferences}")
+
+    def get_prompt_with_preferences(self, base_prompt: str) -> str:
+        """Enhance the base prompt with user preferences"""
+        if not self.preferences:
+            return base_prompt
+
+        personality_traits = self.preferences.get('personalityTraits', [])
+        tone = self.preferences.get('tone', '')
+        language = self.preferences.get('language', '')
+        
+        # Add personality traits to the prompt
+        if personality_traits:
+            traits_str = ", ".join(personality_traits)
+            base_prompt += f"\nPlease maintain a {traits_str} personality in your responses."
+        
+        # Add tone preference
+        if tone:
+            base_prompt += f"\nUse a {tone} tone in your responses."
+        
+        # Add language preference
+        if language:
+            base_prompt += f"\nRespond in {language}."
+        
+        return base_prompt
 
     def chat(self, user_input: str) -> str:
         if self.agent.current_stage < 3:
@@ -48,7 +78,7 @@ class CBTChatbot:
             return self.process_rag_advice(user_input)
 
     def process_chosen_therapy(self, user_input: str) -> str:
-        prompt = f"""
+        base_prompt = f"""
         You are a therapist specializing in {self.chosen_therapy}. Use {self.chosen_therapy} techniques to help the teenager based on the conversation history.
 
         For CBT: Focus on identifying and changing negative thought patterns and behaviors.
@@ -61,6 +91,10 @@ class CBTChatbot:
 
         Therapist response:
         """
+        
+        # Enhance the prompt with user preferences
+        prompt = self.get_prompt_with_preferences(base_prompt)
+        
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
@@ -73,7 +107,7 @@ class CBTChatbot:
     def process_early_stages(self, user_input: str) -> str:
         current_stage, current_summarizer = self.stages[self.agent.current_stage]
         self.conversation_history.append({"role": "user", "content": user_input})
-        response = current_stage.process(user_input)
+        response = current_stage.process(user_input, self.preferences, self.conversation_history)
         self.conversation_history.append({"role": "assistant", "content": response})
         
         try:
@@ -93,21 +127,29 @@ class CBTChatbot:
         
         return response
 
-        
     def route_therapy(self, user_input: str) -> str:
-        self.chosen_therapy, self.therapy_rationale = self.therapy_router.route(self.conversation_history)
-        # response = self.therapy_rationale
-        # response = f"Based on our conversation, I think {self.chosen_therapy} might be the most helpful approach for you. {self.therapy_rationale}\n\nLet's continue with this approach. How do you feel about that?"
-        self.conversation_history.append({"role": "user", "content": user_input})
-        self.conversation_history.append({"role": "assistant", "content": self.therapy_rationale})
-        self.agent.advance_stage()
-        self.click = True
-        return self.chat(user_input)
+        try:
+            self.chosen_therapy, self.therapy_rationale = self.therapy_router.route(self.conversation_history, self.preferences)
+            self.conversation_history.append({"role": "user", "content": user_input})
+            self.conversation_history.append({"role": "assistant", "content": self.therapy_rationale})
+            self.agent.advance_stage()
+            self.click = True
+            return self.chat(user_input)
+        except Exception as e:
+            print(f"Error in therapy routing: {e}")
+            # Fallback response
+            self.chosen_therapy = "CBT"
+            self.therapy_rationale = "Based on our conversation, Cognitive Behavioral Therapy (CBT) would be most helpful for you. Let's continue with this approach."
+            self.conversation_history.append({"role": "user", "content": user_input})
+            self.conversation_history.append({"role": "assistant", "content": self.therapy_rationale})
+            self.agent.advance_stage()
+            self.click = True
+            return self.chat(user_input)
 
     def process_rag_advice(self, user_input: str) -> str:
         current_stage, current_summarizer = self.stages[3]  # RAGAdviceStage
         
-        response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy)
+        response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy, self.preferences)
         self.conversation_history.append({"role": "user", "content": user_input})
         self.conversation_history.append({"role": "assistant", "content": response})
         
@@ -118,7 +160,7 @@ class CBTChatbot:
                 print(f"RAG advice summary: {summary}")
                 
                 if summary.get('retrieve_new_advice', False):
-                    response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy)
+                    response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy, self.preferences)
                     self.conversation_history.append({"role": "assistant", "content": response})
                     self.end_session = True
                 
@@ -164,31 +206,6 @@ class CBTChatbot:
                 "Our session is complete. Remember to practice the techniques "
                 f"we've discussed. {follow_up_message}"
             )
-
-    def update_preferences(self, preferences):
-        """
-        Update the chatbot's behavior based on user preferences
-        """
-        # Store preferences for use in prompts
-        self.preferences = preferences
-        
-        # You can use these preferences in your prompt building
-        # For example, when constructing the system prompt:
-        if hasattr(self, 'preferences') and self.preferences:
-            personality_traits = self.preferences.get('personalityTraits', [])
-            tone = self.preferences.get('tone', '')
-            
-            # Adjust the system prompt based on preferences
-            personality_desc = ""
-            if personality_traits:
-                personality_desc = f"You have the following personality traits: {', '.join(personality_traits)}. "
-            
-            tone_desc = ""
-            if tone:
-                tone_desc = f"Your tone should be {tone}. "
-                
-            # Add these to your system prompt
-            # self.system_prompt += personality_desc + tone_desc
 
     
 if __name__ == "__main__":
