@@ -1,19 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./ChatPage.css";
 import { sendMessageToChatbot, savePreferencesToBackend } from "../connector";
-import happy from "../videos/happy.mov";
-import sad from "../videos/sad.mov";
-import action2 from "../videos/action2.mp4";
-import action3 from "../videos/action3.mp4";
-import action4 from "../videos/action4.mp4";
+import happy from "../videos/happy.mp4";
+import love from "../videos/love.mp4";
+import support from "../videos/support.mp4";
+import dance from "../videos/dance.mp4";
 import action5 from "../videos/action5.mp4";
-import action6 from "../videos/action6.mp4";
-import action7 from "../videos/action7.mp4";
-import action8 from "../videos/action8.mp4";
-import action9 from "../videos/action9.mp4";
-import action10 from "../videos/action10.mp4";
 import action11 from "../videos/action11.mp4";
 import action12 from "../videos/action12.mp4";
+import sad from "../videos/sad.mp4";
 import { useLocation } from "react-router-dom";
 
 function ChatPage() {
@@ -22,7 +17,7 @@ function ChatPage() {
     { text: "你好，我是Milo, 今天感觉怎么样？", sender: "bot", timestamp: new Date() },
   ]);
   const [inputText, setInputText] = useState("");
-  const [currentVideo, setCurrentVideo] = useState(action2);
+  const [currentVideo, setCurrentVideo] = useState(action5);
   const [showNextButton, setShowNextButton] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -48,16 +43,13 @@ function ChatPage() {
   const timeoutRef = useRef(null);
   
   // Video management
-  const defaultVideos = [action2, action3, action4, action5, action6, action7, action8, action9, action10, action11, action12];
+  const defaultVideos = [action5,action11,action12];
   const actionVideos = {
     happy: happy,
+    love: love,
+    support: support,
     sad: sad,
-    welcome: action3,
-    thinking: action4,
-    waiting: action5,
-    nodding: action6,
-    random: action7,
-    idle: action8,
+    dance: dance,
   };
 
   // Add these constants for preferences options
@@ -80,6 +72,8 @@ function ChatPage() {
   ];
 
   const properNouns = ['him/his', 'her/she'];
+  
+  const [emojisArray, setEmojisArray] = useState([]);
   
   // Initialize default video cycle
   useEffect(() => {
@@ -124,6 +118,59 @@ function ChatPage() {
     }, 10000);
   };
 
+  const addEmojiFall = (type, quantity = 80, speed = 15) => {
+    const emojis = {
+      sad: '😢',
+      dance: '💃',
+      happy: '😊',
+      support: '🤗',
+      love: '❤️'
+    };
+    
+    const emoji = emojis[type] || '✨';
+    
+    // Clear any existing emojis
+    setEmojisArray([]);
+    
+    // Create new emoji objects
+    for (let i = 0; i < quantity; i++) {
+      setTimeout(() => {
+        const newEmoji = {
+          id: Date.now() + i,
+          left: Math.floor(Math.random() * 100),
+          top: -30,
+          emoji: emoji,
+          speed: speed,
+          size: Math.floor(36 + Math.random() * 20) // Randomize size between 36px and 56px
+        };
+        
+        setEmojisArray(prev => [...prev, newEmoji]);
+        
+        // Start animation
+        const animationInterval = setInterval(() => {
+          setEmojisArray(prev => {
+            const updated = prev.map(em => {
+              if (em.id === newEmoji.id) {
+                // Move emoji downward faster
+                return { ...em, top: em.top + em.speed };
+              }
+              return em;
+            });
+            
+            // Remove emojis that went off screen
+            return updated.filter(em => em.top < window.innerHeight);
+          });
+        }, 20); // More frequent updates for smoother animation
+        
+        // Clean up interval after shorter time
+        setTimeout(() => {
+          clearInterval(animationInterval);
+          setEmojisArray(prev => prev.filter(em => em.id !== newEmoji.id));
+        }, 3000); // Shorter lifetime
+      }, i * 20); // Much less stagger time to show more at once
+    }
+  };
+
   // Play specific video once
   const playSpecificVideo = (videoKey) => {
     clearInterval(intervalRef.current);
@@ -137,6 +184,21 @@ function ChatPage() {
     timeoutRef.current = setTimeout(() => {
       startDefaultCycle();
     }, videoDuration);
+    
+    // Use the new emoji fall function
+    if (videoKey === 'sad') {
+      addEmojiFall(videoKey, 100, 5);
+    } else if (videoKey === 'happy') {
+      addEmojiFall(videoKey, 120, 6);
+    } else if (videoKey === 'dance') {
+      addEmojiFall(videoKey, 130, 6.5);
+    } else if (videoKey === 'support') {
+      addEmojiFall(videoKey, 110, 5.5);
+    } else if (videoKey === 'love') {
+      addEmojiFall(videoKey, 150, 7);
+    } else {
+      addEmojiFall(videoKey, 80, 5);
+    }
   };
 
   // Play emotion-based video
@@ -147,6 +209,12 @@ function ChatPage() {
     switch(emotion) {
       case 'happy':
         setCurrentVideo(happy);
+        break;
+      case 'love':
+        setCurrentVideo(love);
+        break;
+      case 'support':
+        setCurrentVideo(support);
         break;
       case 'sad':
         setCurrentVideo(sad);
@@ -164,6 +232,19 @@ function ChatPage() {
     timeoutRef.current = setTimeout(() => {
       startDefaultCycle();
     }, videoDuration);
+    
+    // Use the new emoji fall function
+    if (emotion === 'sad') {
+      addEmojiFall(emotion, 100, 5);
+    } else if (emotion === 'happy') {
+      addEmojiFall(emotion, 120, 6);
+    } else if (emotion === 'love') {
+      addEmojiFall(emotion, 150, 7);
+    } else if (emotion === 'support') {
+      addEmojiFall(emotion, 110, 5.5);
+    } else {
+      addEmojiFall(emotion, 80, 5);
+    }
   };
 
   // Handle next button click
@@ -304,7 +385,9 @@ function ChatPage() {
   };
 
   return (
-    <div className={`chat-container ${darkMode ? 'dark' : ''}`}>
+    <div className={`chat-page ${darkMode ? 'dark-mode' : ''}`}
+      style={{ fontSize: '1.2rem' }}
+    >
       <div className="page-background"></div>
       
       {/* Navigation */}
@@ -539,7 +622,11 @@ function ChatPage() {
         </div>
         
         {/* Chat interface */}
-        <div className="chat-box">
+        <div className="chat-box" style={{ 
+          maxWidth: '90%',  // Increase from default
+          height: '75vh',   // Make chat area taller
+          margin: '0 auto'  // Center it
+        }}>
           <div className="chat-header">
             <h2>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -605,7 +692,11 @@ function ChatPage() {
           </div>
 
           {/* Chat input */}
-          <div className="chat-input-container">
+          <div className="chat-input-container" style={{ 
+            fontSize: '1.3rem',
+            maxWidth: '90%',
+            margin: '1rem auto'
+          }}>
             <div className="chat-input">
               <div className="chat-input-actions">
                 <button className="chat-input-action-btn">
@@ -651,11 +742,17 @@ function ChatPage() {
           </svg>
           Random
         </button>
-        <button className="absolute-button" onClick={() => playSpecificVideo('welcome')}>
+        <button className="absolute-button" onClick={() => playSpecificVideo('sad')}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />  
+          </svg>
+          Sad
+        </button>
+        <button className="absolute-button" onClick={() => playSpecificVideo('dance')}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
           </svg>
-          Welcome
+          Dance
         </button>
         <button className="absolute-button" onClick={() => playSpecificVideo('happy')}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -663,19 +760,35 @@ function ChatPage() {
           </svg>
           Happy
         </button>
-        <button className="absolute-button" onClick={() => playSpecificVideo('waiting')}>
+        <button className="absolute-button" onClick={() => playSpecificVideo('support')}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
           </svg>
-          Wait
+          Support
         </button>
-        <button className="absolute-button" onClick={() => playSpecificVideo('nodding')}>
+        <button className="absolute-button" onClick={() => playSpecificVideo('love')}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
           </svg>
-          Nod
+          Love
         </button>
       </div>
+
+      {emojisArray.map(emoji => (
+        <div 
+          key={emoji.id}
+          style={{
+            position: 'fixed',
+            left: `${emoji.left}%`,
+            top: `${emoji.top}px`,
+            fontSize: `${emoji.size}px`,
+            zIndex: 9999,
+            opacity: Math.max(0, 1 - (emoji.top / window.innerHeight))
+          }}
+        >
+          {emoji.emoji}
+        </div>
+      ))}
     </div>
   );
 }
