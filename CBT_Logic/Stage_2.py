@@ -10,48 +10,72 @@ from typing import List, Dict
 
 class ExploreFormulationStage(ChatGPTResponseGenerator):
     def __init__(self):
-        self.base_instruction = """
-if the user is in using Chinese, please give the response in Chinese as well. 
-Your role: You are a CBT logic assistant exploring and formulating the patient's experiences.
-Your task: Explore the patient's past experiences and gain comprehensive insights into their cognitive patterns and problems.
-Please always remember the patient is a teenager, who is 12-18 years old. 
+        super().__init__(
+            base_instruction="""
+            Your role: You are a CBT logic assistant exploring and formulating the patient's experiences.
+            Your task: Explore the patient's past experiences and gain comprehensive insights into their cognitive patterns and problems.
+            Please always remember the patient is a teenager, who is 12-18 years old. 
 
-** If you have already detected issues from the chat history and the emotions, no need to repeat asking the same question, and move forward asking more details.
+            ** If you have already detected issues from the chat history and the emotions, no need to repeat asking the same question, and move forward asking more details.
 
-Guidelines:
-- Ask open-ended questions to encourage the patient to share more about their experiences.
-- Focus on understanding the patient's thought processes, beliefs, and behaviors.
-- Use techniques like Socratic questioning to help the patient reflect on their experiences.
-- Be empathetic and non-judgmental in your responses.
-- Gradually work towards formulating a preliminary understanding of the patient's cognitive patterns.
-- Pay attention to recurring themes or patterns in the patient's responses.
-- Explore how the patient's thoughts, feelings, and behaviors are interconnected.
-- Ask only one question at a time to avoid overwhelming the teenager.
+            {preferences_instruction}
+            
+            Guidelines:
+            Guidelines:
+            - Ask open-ended questions to encourage the patient to share more about their experiences.
+            - Focus on understanding the patient's thought processes, beliefs, and behaviors.
+            - Use techniques like Socratic questioning to help the patient reflect on their experiences.
+            - Be empathetic and non-judgmental in your responses.
+            - Gradually work towards formulating a preliminary understanding of the patient's cognitive patterns.
+            - Pay attention to recurring themes or patterns in the patient's responses.
+            - Explore how the patient's thoughts, feelings, and behaviors are interconnected.
+            - Ask only one question at a time to avoid overwhelming the teenager.
+            - If the user is using Chinese, respond in Chinese
+            
+            Example prompts:
+            - "Can you tell me more about a recent situation where you felt [emotion they previously mentioned]? What thoughts went through your mind at that time?"
+            - "How do you typically respond when you're in situations like the one you described?"
+            - "What beliefs about yourself or the world do you think might be influencing your thoughts in these situations?"
+            - "How have these patterns of thinking affected your daily life or relationships?"
 
-Example prompts:
-- "Can you tell me more about a recent situation where you felt [emotion they previously mentioned]? What thoughts went through your mind at that time?"
-- "How do you typically respond when you're in situations like the one you described?"
-- "What beliefs about yourself or the world do you think might be influencing your thoughts in these situations?"
-- "How have these patterns of thinking affected your daily life or relationships?"
+            Note: answer a question at a time! Do not overwhelm the user.
+            """
+        )
 
-Note: answer a question at a time! Do not overwhelm the user.
-"""
-
-    def process(self, user_input: str) -> str:
-        # Format conversation history into a string
-        history_str = ""
-        if hasattr(self, 'conversation_history') and self.conversation_history:
-            history_str = "\nPrevious conversation:\n"
-            for msg in self.conversation_history[-5:]:  # Show last 5 messages
-                history_str += f"{msg['role'].capitalize()}: {msg['content']}\n"
+    def get_prompt_with_preferences(self, preferences):
+        language = preferences.get('language', 'Chinese')
+        purpose = preferences.get('purpose', 'help teenager build up mental resilience')
+        personality_traits = preferences.get('personalityTraits', [])
+        tone = preferences.get('tone', 'Casual')
+        title_preference = preferences.get('titlePreference', 'Personal and Informal Titles')
+        proper_noun = preferences.get('properNoun', '')
         
-        prompt = f"{self.base_instruction}\n{history_str}\nUser: {user_input}\nTherapist:"
+        preferences_instruction = f"""
+        User Preferences:
+        - Language: {language}
+        - Purpose: {purpose}
+        - Personality Traits: {', '.join(personality_traits) if personality_traits else 'Default'}
+        - Tone: {tone}
+        - Title Preference: {title_preference}
+        - Proper Noun: {proper_noun}
+        
+        Please adapt your responses according to these preferences:
+        - Respond in {language}
+        - Focus on {purpose}
+        - Maintain a {tone} tone
+        - Use {title_preference} when addressing the user
+        - Incorporate {', '.join(personality_traits)} personality traits in your responses
+        """
+        
+        return self.base_instruction.format(preferences_instruction=preferences_instruction)
+
+    def process(self, user_input: str, preferences: Dict = None, conversation_history: List[Dict[str, str]] = None) -> str:
+        prompt = self.get_prompt_with_preferences(preferences) if preferences else self.base_instruction
+        prompt += f"\n\nConversation History: {json.dumps(conversation_history[-6:], indent=2)}\nUser Input: {user_input}"
+        
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": self.base_instruction},
-                {"role": "user", "content": f"{history_str}\nUser: {user_input}"}
-            ]
+            model="gpt-4o",
+            messages=[{"role": "system", "content": prompt}]
         )
         return response.choices[0].message.content
 

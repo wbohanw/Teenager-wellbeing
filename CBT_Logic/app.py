@@ -6,6 +6,7 @@ from openai import OpenAI
 from CBT_chat import CBTChatbot
 import datetime
 import json
+from user_preferences import preferences_manager
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -195,25 +196,52 @@ def server_error(error):
 @app.route('/preferences', methods=['POST'])
 def save_preferences():
     try:
-        preferences = request.json
+        data = request.json
+        user_id = data.get('user_id', 'default_user')
+        preferences = data.get('preferences', {})
         
-        # Print the preferences to the console
-        print("\n===== USER PREFERENCES =====")
-        print(json.dumps(preferences, indent=4))
-        print("=============================\n")
+        if not preferences:
+            return jsonify({
+                'status': 'error',
+                'error': 'No preferences provided'
+            }), 400
+            
+        success = preferences_manager.save_preferences(user_id, preferences)
         
-        # Store preferences in user session if needed
-        user_id = request.args.get('user_id', 'default_user')
-        if user_id in user_sessions:
-            chatbot = user_sessions[user_id]
-            chatbot.update_preferences(preferences)
-        
-        return jsonify({
-            'status': 'success',
-            'message': 'Preferences saved successfully'
-        })
+        if success:
+            return jsonify({
+                'status': 'success',
+                'message': 'Preferences saved successfully'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'error': 'Failed to save preferences'
+            }), 500
+            
     except Exception as e:
-        print(f"Error saving preferences: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+@app.route('/preferences/<user_id>', methods=['GET'])
+def get_preferences(user_id):
+    try:
+        preferences = preferences_manager.get_preferences(user_id)
+        
+        if preferences is not None:
+            return jsonify({
+                'status': 'success',
+                'preferences': preferences
+            })
+        else:
+            return jsonify({
+                'status': 'not_found',
+                'message': 'No preferences found for this user'
+            }), 404
+            
+    except Exception as e:
         return jsonify({
             'status': 'error',
             'error': str(e)

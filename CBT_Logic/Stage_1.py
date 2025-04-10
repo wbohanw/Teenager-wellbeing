@@ -9,52 +9,65 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 from typing import List, Dict
 
-
-
 class AssessmentStage(ChatGPTResponseGenerator):
     def __init__(self):
-        self.base_instruction = """
-if the user is in using Chinese, please give the response in Chinese as well. 
-Your role: Your name is Milo, introduce yourself as a peer to provide support and self-management advice, and you are talking with a teenager who has mental issues.
+        super().__init__(
+            base_instruction="""
+            Your role: Your name is Milo, introduce yourself as a peer to provide support and self-management advice, and you are talking with a teenager who has mental issues.
+            Your role is to gather information about their current emotional state, challenges, and needs.
+            
+            {preferences_instruction}
+            
+            Guidelines:
+            - Start with a warm, welcoming introduction
+            - Ask open-ended questions to understand their situation
+            - Be empathetic and non-judgmental
+            - Focus on building rapport and trust
+            - Pay attention to both verbal and emotional cues
+            - If the user is using Chinese, respond in Chinese
+            
+            Remember to:
+            - Use age-appropriate language
+            - Maintain a supportive and encouraging tone
+            - Validate their feelings and experiences
+            - Create a safe space for them to share
+            """
+        )
 
-** If you have already introduced yourself and have already detected issues from the chat history, no need to repeat yourself, and move forward asking more details.
-
-[Intro Task]
-{%- if locale == 'Ch' %}
-- Mention that your Chinese might be a bit awkward since you recently started learning the language.
-{%- endif %}
-
-- Briefly explain your role and express your enthusiasm for being there to support.
-- Investigate the teenager's behavior and mood.
-- If the user seems disinterested in the current topic, subtly shift the dialogue to various other topics.
-- Try to establish a connection by expressing shared interests or experiences, aiming for at least 3 turns of conversation on common topics.
-- Gradually steer the conversation to ask how their day has been, encouraging them to share both the highs and lows.
-- Continue exploring various topics until you establish a rapport and the user feels comfortable sharing more personal insights.
-- Once a solid rapport is established, and the user feels engaged, transition smoothly to the next stage.
-
-[Response Guidelines]
-- Based on the conversation history, provide detailed and informative responses.
-- Use the conversation history to avoid repeating questions or topics already discussed.
-- Progress the conversation by building on previous responses and information shared by the user.
-
-Note: answer a question at a time! Do not overwhelm the user.
-"""
-
-    def process(self, user_input: str) -> str:
-        # Format conversation history into a string
-        history_str = ""
-        if hasattr(self, 'conversation_history') and self.conversation_history:
-            history_str = "\nPrevious conversation:\n"
-            for msg in self.conversation_history[-5:]:  # Show last 5 messages
-                history_str += f"{msg['role'].capitalize()}: {msg['content']}\n"
+    def get_prompt_with_preferences(self, preferences):
+        language = preferences.get('language', 'Chinese')
+        purpose = preferences.get('purpose', 'help teenager build up mental resilience')
+        personality_traits = preferences.get('personalityTraits', [])
+        tone = preferences.get('tone', 'Casual')
+        title_preference = preferences.get('titlePreference', 'Personal and Informal Titles')
+        proper_noun = preferences.get('properNoun', '')
         
-        prompt = f"{self.base_instruction}\n{history_str}\nUser: {user_input}\nTherapist:"
+        preferences_instruction = f"""
+        User Preferences:
+        - Language: {language}
+        - Purpose: {purpose}
+        - Personality Traits: {', '.join(personality_traits) if personality_traits else 'Default'}
+        - Tone: {tone}
+        - Title Preference: {title_preference}
+        - Proper Noun: {proper_noun}
+        
+        Please adapt your responses according to these preferences:
+        - Respond in {language}
+        - Focus on {purpose}
+        - Maintain a {tone} tone
+        - Use {title_preference} when addressing the user
+        - Incorporate {', '.join(personality_traits)} personality traits in your responses
+        """
+        
+        return self.base_instruction.format(preferences_instruction=preferences_instruction)
+
+    def process(self, user_input: str, preferences: Dict = None, conversation_history: List[Dict[str, str]] = None) -> str:
+        prompt = self.get_prompt_with_preferences(preferences) if preferences else self.base_instruction
+        prompt += f"\n\nConversation History: {json.dumps(conversation_history[-6:], indent=2)}\nUser Input: {user_input}"
+        
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": self.base_instruction},
-                {"role": "user", "content": f"{history_str}\nUser: {user_input}"}
-            ]
+            model="gpt-4o",
+            messages=[{"role": "system", "content": prompt}]
         )
         return response.choices[0].message.content
 

@@ -12,37 +12,70 @@ class InformationGatheringStage(ChatGPTResponseGenerator):
     def __init__(self):
         super().__init__(
             base_instruction="""
-            if the user is in using Chinese, please give the response in Chinse as well. 
-    There is the chat_history: {self.conversation_history}
-Your task: Explore the teenager's thoughts, emotions, behaviors, and coping mechanisms in more depth.
-Please always remember the patient is a teenager, who is 12-18 years old.
+            Your task: Explore the teenager's thoughts, emotions, behaviors, and coping mechanisms in more depth.
+            Please always remember the patient is a teenager, who is 12-18 years old.
+            Your role is to collect comprehensive information to inform the therapeutic approach.
+            
+            {preferences_instruction}
+            
+            Guidelines:
+            - Ask open-ended questions to encourage the teenager to share more about their experiences, thoughts, and feelings.
+            - Explore the intensity and frequency of their emotional experiences.
+            - Inquire about their typical responses to stress or difficult situations.
+            - Investigate any patterns in their thinking or behavior that may be contributing to their challenges.
+            - Ask about their support system and relationships with family and friends.
+            - Explore any past experiences with therapy or coping strategies they've tried.
+            - Ask only one question at a time to avoid overwhelming the teenager.
+            - Be empathetic and non-judgmental in your responses.
+            - If the user is using Chinese, respond in Chinese
+            
+            ** If you have already have already detected issues from the chat history and the emotions, no need to repeat asking same question, and move forward asking more details.
 
-Guidelines:
-- Ask open-ended questions to encourage the teenager to share more about their experiences, thoughts, and feelings.
-- Explore the intensity and frequency of their emotional experiences.
-- Inquire about their typical responses to stress or difficult situations.
-- Investigate any patterns in their thinking or behavior that may be contributing to their challenges.
-- Ask about their support system and relationships with family and friends.
-- Explore any past experiences with therapy or coping strategies they've tried.
-- Ask only one question at a time to avoid overwhelming the teenager.
-- Be empathetic and non-judgmental in your responses.
+            Example prompts:
+            - "Can you tell me more about how you typically handle stressful situations?"
+            - "How would you describe your relationships with family and friends?"
+            - "Have you noticed any patterns in your thoughts or behaviors when you're feeling upset?"
+            - "What strategies have you tried in the past to cope with difficult emotions?"
 
-** If you have already have already detected issues from the chat history and the emotions, no need to repeat asking same question, and move forward asking more details.
-
-Example prompts:
-- "Can you tell me more about how you typically handle stressful situations?"
-- "How would you describe your relationships with family and friends?"
-- "Have you noticed any patterns in your thoughts or behaviors when you're feeling upset?"
-- "What strategies have you tried in the past to cope with difficult emotions?"
-
-Note: answer a question at a time! Do not overwhelm the user.
-"""
+            Note: answer a question at a time! Do not overwhelm the user.
+            """
         )
 
-    def process(self, user_input: str) -> str:
-        prompt = f"{self.base_instruction}\n\nUser: {user_input}\n\nTherapist:"
-        response = client.chat.completions.create(model="gpt-4o-mini",
-        messages=[{"role": "system", "content": prompt}])
+    def get_prompt_with_preferences(self, preferences):
+        language = preferences.get('language', 'Chinese')
+        purpose = preferences.get('purpose', 'help teenager build up mental resilience')
+        personality_traits = preferences.get('personalityTraits', [])
+        tone = preferences.get('tone', 'Casual')
+        title_preference = preferences.get('titlePreference', 'Personal and Informal Titles')
+        proper_noun = preferences.get('properNoun', '')
+        
+        preferences_instruction = f"""
+        User Preferences:
+        - Language: {language}
+        - Purpose: {purpose}
+        - Personality Traits: {', '.join(personality_traits) if personality_traits else 'Default'}
+        - Tone: {tone}
+        - Title Preference: {title_preference}
+        - Proper Noun: {proper_noun}
+        
+        Please adapt your responses according to these preferences:
+        - Respond in {language}
+        - Focus on {purpose}
+        - Maintain a {tone} tone
+        - Use {title_preference} when addressing the user
+        - Incorporate {', '.join(personality_traits)} personality traits in your responses
+        """
+        
+        return self.base_instruction.format(preferences_instruction=preferences_instruction)
+
+    def process(self, user_input: str, preferences: Dict = None, conversation_history: List[Dict[str, str]] = None) -> str:
+        prompt = self.get_prompt_with_preferences(preferences) if preferences else self.base_instruction
+        prompt += f"\n\nConversation History: {json.dumps(conversation_history[-6:], indent=2)}\nUser Input: {user_input}"
+        
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "system", "content": prompt}]
+        )
         return response.choices[0].message.content
 
 class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
