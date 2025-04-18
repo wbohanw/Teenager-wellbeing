@@ -36,6 +36,36 @@ class CBTChatbot:
         self.click = False
         self.suggestion = None
         self.end_session = False
+        self.preferences = None
+
+    def update_preferences(self, preferences):
+        """Update the chatbot's preferences"""
+        self.preferences = preferences
+        print(f"Updated preferences for user {self.user_id}: {preferences}")
+
+    def get_prompt_with_preferences(self, base_prompt: str) -> str:
+        """Enhance the base prompt with user preferences"""
+        if not self.preferences:
+            return base_prompt
+
+        personality_traits = self.preferences.get('personalityTraits', [])
+        tone = self.preferences.get('tone', '')
+        language = self.preferences.get('language', '')
+        
+        # Add personality traits to the prompt
+        if personality_traits:
+            traits_str = ", ".join(personality_traits)
+            base_prompt += f"\nPlease maintain a {traits_str} personality in your responses."
+        
+        # Add tone preference
+        if tone:
+            base_prompt += f"\nUse a {tone} tone in your responses."
+        
+        # Add language preference
+        if language:
+            base_prompt += f"\nRespond in {language}."
+        
+        return base_prompt
 
     def chat(self, user_input: str) -> str:
         if self.agent.current_stage < 3:
@@ -48,7 +78,7 @@ class CBTChatbot:
             return self.process_rag_advice(user_input)
 
     def process_chosen_therapy(self, user_input: str) -> str:
-        prompt = f"""
+        base_prompt = f"""
         You are a therapist specializing in {self.chosen_therapy}. Use {self.chosen_therapy} techniques to help the teenager based on the conversation history.
 
         For CBT: Focus on identifying and changing negative thought patterns and behaviors.
@@ -61,6 +91,10 @@ class CBTChatbot:
 
         Therapist response:
         """
+        
+        # Enhance the prompt with user preferences
+        prompt = self.get_prompt_with_preferences(base_prompt)
+        
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}]
@@ -73,52 +107,73 @@ class CBTChatbot:
     def process_early_stages(self, user_input: str) -> str:
         current_stage, current_summarizer = self.stages[self.agent.current_stage]
         self.conversation_history.append({"role": "user", "content": user_input})
-        response = current_stage.process(user_input)
+        response = current_stage.process(user_input, self.preferences, self.conversation_history)
         self.conversation_history.append({"role": "assistant", "content": response})
         
-        summary_json = current_summarizer.summarize(self.conversation_history)
-        summary = json.loads(summary_json)
-        print(summary)
-        self.user_emotion = summary.get('user_emotion', 'Unknown')
-        
-    
-        if summary.get("move_to_next", "True"):
-            self.agent.advance_stage()
-            if self.agent.current_stage == 3:
-                return self.therapy_router.route(self.conversation_history)
-            # else:
-            #     response += f"\n\nWe're now moving to the next stage: {self.agent.get_current_stage()}"
+        try:
+            summary_json = current_summarizer.summarize(self.conversation_history)
+            summary = json.loads(summary_json)
+            print(f"Stage summary: {summary}")
+            self.user_emotion = summary.get('user_emotion', 'Unknown')
+            
+            if summary.get("move_to_next", "True"):
+                self.agent.advance_stage()
+                if self.agent.current_stage == 3:
+                    return self.therapy_router.route(self.conversation_history)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing summary JSON: {e}")
+            # Continue with default values if JSON parsing fails
+            self.user_emotion = 'Unknown'
         
         return response
 
-        
     def route_therapy(self, user_input: str) -> str:
-        self.chosen_therapy, self.therapy_rationale = self.therapy_router.route(self.conversation_history)
-        # response = self.therapy_rationale
-        # response = f"Based on our conversation, I think {self.chosen_therapy} might be the most helpful approach for you. {self.therapy_rationale}\n\nLet's continue with this approach. How do you feel about that?"
-        self.conversation_history.append({"role": "user", "content": user_input})
-        self.conversation_history.append({"role": "assistant", "content": self.therapy_rationale})
-        self.agent.advance_stage()
-        self.click = True
-        return self.chat(user_input)
+        try:
+            self.chosen_therapy, self.therapy_rationale = self.therapy_router.route(self.conversation_history, self.preferences)
+            self.conversation_history.append({"role": "user", "content": user_input})
+            self.conversation_history.append({"role": "assistant", "content": self.therapy_rationale})
+            self.agent.advance_stage()
+            self.click = True
+            return self.chat(user_input)
+        except Exception as e:
+            print(f"Error in therapy routing: {e}")
+            # Fallback response
+            self.chosen_therapy = "CBT"
+            self.therapy_rationale = "Based on our conversation, Cognitive Behavioral Therapy (CBT) would be most helpful for you. Let's continue with this approach."
+            self.conversation_history.append({"role": "user", "content": user_input})
+            self.conversation_history.append({"role": "assistant", "content": self.therapy_rationale})
+            self.agent.advance_stage()
+            self.click = True
+            return self.chat(user_input)
 
     def process_rag_advice(self, user_input: str) -> str:
         current_stage, current_summarizer = self.stages[3]  # RAGAdviceStage
         
-        response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy)
+        response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy, self.preferences)
         self.conversation_history.append({"role": "user", "content": user_input})
         self.conversation_history.append({"role": "assistant", "content": response})
         
-        summary_json = current_summarizer.summarize(self.conversation_history, self.chosen_therapy)
-        
-        summary = json.loads(summary_json)
-        if summary.get('retrieve_new_advice', False):
-            response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy)
-            self.conversation_history.append({"role": "assistant", "content": response})
-            self.end_session = True
-        
-        if not summary.get('continue_session', True):
-            return "Our therapy sessions have come to an end. I hope you've found them helpful. Remember to practice the techniques we've discussed. If you need further support in the future, don't hesitate to seek help."
+        try:
+            summary_json = current_summarizer.summarize(self.conversation_history, self.chosen_therapy)
+            if summary_json:
+                summary = json.loads(summary_json)
+                print(f"RAG advice summary: {summary}")
+                
+                if summary.get('retrieve_new_advice', False):
+                    response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy, self.preferences)
+                    self.conversation_history.append({"role": "assistant", "content": response})
+                    self.end_session = True
+                
+                if not summary.get('continue_session', True):
+                    return "Our therapy sessions have come to an end. I hope you've found them helpful. Remember to practice the techniques we've discussed. If you need further support in the future, don't hesitate to seek help."
+        except json.JSONDecodeError as e:
+            print(f"Error parsing RAG advice summary JSON: {e}")
+            # Continue with the current response if JSON parsing fails
+            pass
+        except Exception as e:
+            print(f"Error in RAG advice processing: {e}")
+            # Continue with the current response if any other error occurs
+            pass
         
         return response
         

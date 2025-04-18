@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from CBT_chat import CBTChatbot
 import datetime
+import json
+from user_preferences import preferences_manager
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -45,26 +47,56 @@ def chat():
             
         user_message = data['message']
         user_id = data.get('user_id', 'default_user')
+        preferences = data.get('preferences', {})
+        
+        print(f"Received message from user {user_id}: {user_message}")
         
         chatbot = get_chatbot_session(user_id)
-        response = chatbot.chat(user_message)
-        alert_message = chatbot.alert_agent.analyze_conversation(user_message, chatbot.conversation_history)
         
-        stage_progress = chatbot.get_stage_progress()
-
-        
-        return jsonify({
-            'response': response,
-            'alert': alert_message if alert_message else None,
-            'user_emotion': chatbot.user_emotion,
-            'stage_progress': stage_progress,
-            'click': chatbot.click
-        })
+        # Apply preferences if provided
+        if preferences:
+            print("\n===== USER PREFERENCES =====")
+            print(json.dumps(preferences, indent=4))
+            print("=============================\n")
+            chatbot.update_preferences(preferences)
+            
+        try:
+            response = chatbot.chat(user_message)
+            alert_message = chatbot.alert_agent.analyze_conversation(user_message, chatbot.conversation_history)
+            stage_progress = chatbot.get_stage_progress()
+            
+            print(f"Generated response: {response}")
+            
+            return jsonify({
+                'response': response,
+                'alert': alert_message if alert_message else None,
+                'user_emotion': chatbot.user_emotion,
+                'stage_progress': stage_progress,
+                'click': chatbot.click
+            })
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error in chatbot response: {e}")
+            return jsonify({
+                'status': 'error',
+                'error': 'Invalid JSON response from chatbot',
+                'details': str(e)
+            }), 500
+        except Exception as e:
+            print(f"Error in chatbot processing: {e}")
+            return jsonify({
+                'status': 'error',
+                'error': 'Error processing chatbot response',
+                'details': str(e)
+            }), 500
+            
     except Exception as e:
-        print(f"Error in chat endpoint: {e}")
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error in chat endpoint: {error_details}")
         return jsonify({
             'status': 'error',
-            'error': str(e)
+            'error': str(e),
+            'details': error_details
         }), 500
 
 @app.route('/chat/<message>', methods=['GET'])
@@ -160,6 +192,60 @@ def not_found(error):
 @app.errorhandler(500)
 def server_error(error):
     return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/preferences', methods=['POST'])
+def save_preferences():
+    try:
+        data = request.json
+        user_id = data.get('user_id', 'default_user')
+        preferences = data.get('preferences', {})
+        
+        if not preferences:
+            return jsonify({
+                'status': 'error',
+                'error': 'No preferences provided'
+            }), 400
+            
+        success = preferences_manager.save_preferences(user_id, preferences)
+        
+        if success:
+            return jsonify({
+                'status': 'success',
+                'message': 'Preferences saved successfully'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'error': 'Failed to save preferences'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+@app.route('/preferences/<user_id>', methods=['GET'])
+def get_preferences(user_id):
+    try:
+        preferences = preferences_manager.get_preferences(user_id)
+        
+        if preferences is not None:
+            return jsonify({
+                'status': 'success',
+                'preferences': preferences
+            })
+        else:
+            return jsonify({
+                'status': 'not_found',
+                'message': 'No preferences found for this user'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

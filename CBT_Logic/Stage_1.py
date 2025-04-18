@@ -9,45 +9,66 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 from typing import List, Dict
 
-
-
 class AssessmentStage(ChatGPTResponseGenerator):
     def __init__(self):
         super().__init__(
-        base_instruction="""
-if the user is in using Chinese, please give the response in Chinse as well. 
-Your role: Your name is Milo, introduce yourself as a peer to provide support and self-management advice, and you are talking with a teenager who has mental issues .
-here is the chat_history: {self.conversation_history}
-Say hi! Your goal is to build trust with the teenager and assess their eligibility for therapy. ask them to how the life is going.
-Please always remember the patient is a teenager, who is 12-18 years old. 
+            base_instruction="""
+            Your role: Your name is Milo, introduce yourself as a peer to provide support and self-management advice, and you are talking with a teenager who has mental issues.
+            Your role is to gather information about their current emotional state, challenges, and needs.
+            
+            {preferences_instruction}
+            
+            Guidelines:
+            - Start with a warm, welcoming introduction
+            - Ask open-ended questions to understand their situation
+            - Be empathetic and non-judgmental
+            - Focus on building rapport and trust
+            - Pay attention to both verbal and emotional cues
+            - If the user is using Chinese, respond in Chinese
+            
+            Remember to:
+            - Use age-appropriate language
+            - Maintain a supportive and encouraging tone
+            - Validate their feelings and experiences
+            - Create a safe space for them to share
+            """
+        )
 
-** If you have already introduced yourself and have already detected issues from the chat history, no need to repeat yourself, and move forward asking more details.
+    def get_prompt_with_preferences(self, preferences):
+        language = preferences.get('language', 'Chinese')
+        purpose = preferences.get('purpose', 'help teenager build up mental resilience')
+        personality_traits = preferences.get('personalityTraits', [])
+        tone = preferences.get('tone', 'Casual')
+        title_preference = preferences.get('titlePreference', 'Personal and Informal Titles')
+        proper_noun = preferences.get('properNoun', '')
+        
+        preferences_instruction = f"""
+        User Preferences:
+        - Language: {language}
+        - Purpose: {purpose}
+        - Personality Traits: {', '.join(personality_traits) if personality_traits else 'Default'}
+        - Tone: {tone}
+        - Title Preference: {title_preference}
+        - Proper Noun: {proper_noun}
+        
+        Please adapt your responses according to these preferences:
+        - Respond in {language}
+        - Focus on {purpose}
+        - Maintain a {tone} tone
+        - Use {title_preference} when addressing the user
+        - Incorporate {', '.join(personality_traits)} personality traits in your responses
+        """
+        
+        return self.base_instruction.format(preferences_instruction=preferences_instruction)
 
-[Intro Task]
-{%- if locale == 'Ch' %}
-- Mention that your Chinese might be a bit awkward since you recently started learning the language.
-{%- endif %}
-
-- Briefly explain your role and express your enthusiasm for being there to support.
-- Investigate the teenager's behavior and mood.
-- If the user seems disinterested in the current topic, subtly shift the dialogue to various other topics.
-- Try to establish a connection by expressing shared interests or experiences, aiming for at least 3 turns of conversation on common topics.
-- Gradually steer the conversation to ask how their day has been, encouraging them to share both the highs and lows.
-- Continue exploring various topics until you establish a rapport and the user feels comfortable sharing more personal insights.
-- Once a solid rapport is established, and the user feels engaged, transition smoothly to the next stage.
-
-[Response Guidelines]
-- based on the conversation history, provide detailed and informative responses.
-- Use the conversation history to avoid repeating questions or topics already discussed.
-- Progress the conversation by building on previous responses and information shared by the user.
-
-Note: answer a question at a time! Do not overwhelm the user.
-"""
-)
-    def process(self, user_input: str) -> str:
-        prompt = f"{self.base_instruction}\n\nUser: {user_input}\n\nTherapist:"
-        response = client.chat.completions.create(model="gpt-4o-mini",
-        messages=[{"role": "system", "content": prompt}])
+    def process(self, user_input: str, preferences: Dict = None, conversation_history: List[Dict[str, str]] = None) -> str:
+        prompt = self.get_prompt_with_preferences(preferences) if preferences else self.base_instruction
+        prompt += f"\n\nConversation History: {json.dumps(conversation_history[-6:], indent=2)}\nUser Input: {user_input}"
+        
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "system", "content": prompt}]
+        )
         return response.choices[0].message.content
 
 
