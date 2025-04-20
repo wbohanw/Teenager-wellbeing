@@ -401,10 +401,10 @@ function ChatPage() {
         </div>
         
         <div className="nav-links">
-          <a href="#" className="nav-link">Home</a>
-          <a href="#" className="nav-link">Profile</a>
-          <a href="#" className="nav-link">Settings</a>
-          <a href="#" className="nav-link">Help</a>
+          <a href="#" className="nav-link">主页</a>
+          <a href="#" className="nav-link">个人资料</a>
+          <a href="#" className="nav-link">设置</a>
+          <a href="#" className="nav-link">帮助</a>
           
           {/* Add this button to open preferences */}
           <button className="nav-link preferences-btn" onClick={() => setShowPreferences(true)}>
