@@ -39,10 +39,10 @@ function LandingPage() {
         </div>
         
         <nav className="landing-nav">
-          <a href="#" className="landing-nav-link">Home</a>
-          <a href="#" className="landing-nav-link">About</a>
-          <a href="#" className="landing-nav-link">Features</a>
-          <a href="#" className="landing-nav-link">Contact</a>
+          <a href="#" className="nav-link">主页</a>
+          <a href="#" className="nav-link">个人资料</a>
+          <a href="#" className="nav-link">设置</a>
+          <a href="#" className="nav-link">帮助</a>
           
           <button className="landing-theme-toggle" onClick={toggleDarkMode}>
             {darkMode ? (
@@ -71,11 +71,11 @@ function LandingPage() {
         <div className="landing-main">
           <div className="landing-info">
             <h1 className="landing-title">
-              Meet <span>Milo</span>, Your Mental Wellness Companion
+            认识 <span>Milo</span>, 您的心理健康伙伴
             </h1>
             
             <p className="landing-subtitle">
-              Milo is an AI-powered conversational assistant designed to support teenagers' mental health and wellbeing through friendly conversation, guidance, and emotional support.
+            Milo 是一款由人工智能驱动的对话助手，旨在通过友善的交流、引导与情感支持，帮助青少年提升心理健康
             </p>
             
             <div className="landing-features">
@@ -86,8 +86,8 @@ function LandingPage() {
                   </svg>
                 </div>
                 <div className="feature-text">
-                  <h3 className="feature-title">Friendly Conversations</h3>
-                  <p className="feature-description">Chat with Milo about your day, feelings, or challenges in a safe, judgment-free space.</p>
+                  <h3 className="feature-title">友善的交流</h3>
+                  <p className="feature-description">在一个安全、无评判的空间中，与 Milo 聊聊你的一天、感受或面临的挑战。</p>
                 </div>
               </div>
               
@@ -98,8 +98,8 @@ function LandingPage() {
                   </svg>
                 </div>
                 <div className="feature-text">
-                  <h3 className="feature-title">Private & Secure</h3>
-                  <p className="feature-description">Your conversations stay private, with strong security measures to protect your personal information.</p>
+                  <h3 className="feature-title">私密与安全</h3>
+                  <p className="feature-description">您的对话内容将受到严格保护，采用先进的安全措施，确保个人信息的隐私性。</p>
                 </div>
               </div>
               
@@ -110,8 +110,8 @@ function LandingPage() {
                   </svg>
                 </div>
                 <div className="feature-text">
-                  <h3 className="feature-title">Growth & Support</h3>
-                  <p className="feature-description">Get personalized guidance, emotional support, and tools to develop healthy coping strategies.</p>
+                  <h3 className="feature-title">成长与支持</h3>
+                  <p className="feature-description">获得个性化的指导、情感支持，以及培养健康应对策略的实用工具。</p>
                 </div>
               </div>
             </div>
@@ -119,7 +119,7 @@ function LandingPage() {
           
           <div className="landing-chat-box">
             <div className="greeting">
-              <span>Hello, I'm Milo</span>
+              <span>你好, 我是 Milo</span>
             </div>
             
             <div className="milo-image-container">
@@ -131,11 +131,11 @@ function LandingPage() {
             </div>
             
             <p className="greeting-text">
-              I'm here to chat, listen, and support you through your daily challenges and emotions.
+            我在这里陪你聊天、倾听，并在你面对日常挑战和情绪时给予支持。
             </p>
 
             <button className="chat-button" onClick={() => navigate("/chat")}>
-              <span>Let's Chat</span>
+              <span>我们聊聊吧</span>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z" />
               </svg>
