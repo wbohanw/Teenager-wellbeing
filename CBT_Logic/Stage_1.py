@@ -83,7 +83,7 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
         - Provide a structured JSON response with the following properties:
 
         (1) stress_level: User's current stress level (Low, Moderate, High)
-        (2) user_emotion: The primary emotion the user is experiencing
+        (2) user_emotion: The primary emotion the user is experiencing, MUST be one of: "neutral", "happy", "sad", "joy", "support", "love"
         (3) eligible_for_therapy: Boolean indicating whether the user is eligible for therapy
         (4) move_to_next: Boolean indicating if it's reasonable to proceed to the next phase
         (5) rationale: Explanation of how the above properties were derived
@@ -106,7 +106,7 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
         Output:
         {
             "stress_level": "high",
-            "user_emotion": "felt nervous",
+            "user_emotion": "sad",
             "eligible_for_therapy": true,
             "move_to_next": true,
             "rationale": "The user expressed a key episode of being bullied, and their emotions of feeling very down and oppressed were clearly identified."
