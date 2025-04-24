@@ -1,6 +1,7 @@
 import openai
 from CBT_agent import CBTAgent
 from typing import List, Dict
+from Stage_pre import PreStage, PreStageSummarizer
 from Stage_1 import AssessmentSummarizer, AssessmentStage
 from Stage_2 import ExploreFormulationStage, ExploreFormulationSummarizer
 from Stage_3 import InformationGatheringStage, InformationGatheringSummarizer
@@ -22,6 +23,7 @@ class CBTChatbot:
         self.alert_agent = AlertAgent(api_key)
         self.therapy_router = TherapyRouter(api_key)
         self.stages = [
+            (PreStage(), PreStageSummarizer()),
             (AssessmentStage(), AssessmentSummarizer()),
             (ExploreFormulationStage(), ExploreFormulationSummarizer()),
             (InformationGatheringStage(), InformationGatheringSummarizer()),
@@ -37,6 +39,7 @@ class CBTChatbot:
         self.suggestion = None
         self.end_session = False
         self.preferences = None
+        self.user_info = {}
 
     def update_preferences(self, preferences):
         """Update the chatbot's preferences"""
@@ -68,9 +71,9 @@ class CBTChatbot:
         return base_prompt
 
     def chat(self, user_input: str) -> str:
-        if self.agent.current_stage < 3:
+        if self.agent.current_stage < 4:
             return self.process_early_stages(user_input)
-        elif self.agent.current_stage == 3 and self.chosen_therapy is None:
+        elif self.agent.current_stage == 4 and self.chosen_therapy is None:
             return self.route_therapy(user_input)
         else:
             self.click = False
@@ -114,11 +117,19 @@ class CBTChatbot:
             summary_json = current_summarizer.summarize(self.conversation_history)
             summary = json.loads(summary_json)
             print(f"Stage summary: {summary}")
+            
+            # Store user info from pre-stage
+            if self.agent.current_stage == 0:
+                self.user_info = {
+                    "name": summary.get('user_name', 'Unknown'),
+                    "interests": summary.get('interests', [])
+                }
+            
             self.user_emotion = summary.get('user_emotion', 'Unknown')
             
             if summary.get("move_to_next", "True"):
                 self.agent.advance_stage()
-                if self.agent.current_stage == 3:
+                if self.agent.current_stage == 4:
                     return self.therapy_router.route(self.conversation_history)
         except json.JSONDecodeError as e:
             print(f"Error parsing summary JSON: {e}")
@@ -147,7 +158,7 @@ class CBTChatbot:
             return self.chat(user_input)
 
     def process_rag_advice(self, user_input: str) -> str:
-        current_stage, current_summarizer = self.stages[3]  # RAGAdviceStage
+        current_stage, current_summarizer = self.stages[4]  # RAGAdviceStage
         
         response = current_stage.process(user_input, self.conversation_history, self.chosen_therapy, self.preferences)
         self.conversation_history.append({"role": "user", "content": user_input})

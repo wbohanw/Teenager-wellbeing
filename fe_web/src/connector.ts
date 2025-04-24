@@ -1,6 +1,21 @@
 const API_URL = "http://127.0.0.1:5000"; 
 
-export const sendMessageToChatbot = async (message, preferences = {}) => {
+interface ChatPreferences {
+  language?: string;
+  purpose?: string;
+  personalityTraits?: string[];
+  tone?: string;
+  titlePreference?: string;
+  properNouns?: string[];
+  [key: string]: any;
+}
+
+interface ChatResponse {
+  response: string;
+  [key: string]: any;
+}
+
+export const sendMessageToChatbot = async (message: string, preferences: ChatPreferences = {}): Promise<ChatResponse> => {
     try {
         const response = await fetch(`${API_URL}/chat`, {
             method: "POST",
@@ -26,7 +41,7 @@ export const sendMessageToChatbot = async (message, preferences = {}) => {
     }
 }
 
-export const savePreferencesToBackend = async (preferences) => {
+export const savePreferencesToBackend = async (preferences: ChatPreferences): Promise<{status: string, message: string}> => {
     try {
         const response = await fetch('http://localhost:5000/preferences', {
             method: 'POST',
@@ -45,4 +60,4 @@ export const savePreferencesToBackend = async (preferences) => {
         console.error('Error saving preferences to backend:', error);
         return { status: 'error', message: "Failed to save preferences" };
     }
-};
+}; 

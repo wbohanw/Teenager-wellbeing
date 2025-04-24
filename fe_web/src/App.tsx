@@ -1,7 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import LandingPage from "./LandingPage/LandingPage";
-import ChatPage from "./ChatPage/ChatPage";
+// We'll update these imports after creating the TypeScript files
+import LandingPage from "./LandingPage";
+import ChatPage from "./ChatPage";
 
 function App() {
   return (

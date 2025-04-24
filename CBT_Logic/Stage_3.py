@@ -89,7 +89,7 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
         - Provide a structured JSON response with the following properties:
 
         (1) key_issues: List of primary challenges or concerns identified.
-        (2) emotional_patterns: Description of the teenager's typical emotional responses and their intensity.
+        (2) user_emotion: The primary emotion the user is experiencing. MUST be one of: "neutral", "happy", "sad", "joy", "support", "love"
         (3) coping_mechanisms: List of strategies the teenager uses to handle difficult situations.
         (4) support_system: Brief description of the teenager's relationships and support network.
         (5) move_to_next: Boolean indicating whether enough information has been gathered to proceed to therapy selection.
@@ -113,7 +113,7 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
         #### Output:
         {
             "key_issues": ["Social isolation", "Difficulty managing stress", "Academic challenges"],
-            "emotional_patterns": "Feels overwhelmed under stress and tends to withdraw from social interactions.",
+            "user_emotion": "sad",
             "coping_mechanisms": ["Self-isolation", "Avoidance"],
             "support_system": "Close relationship with mother, strained relationship with father, limited openness with friends.",
             "move_to_next": true,
@@ -164,7 +164,7 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
             # Fallback in case of parsing error
             return json.dumps({
                 "key_issues": ["Communication challenges"],
-                "emotional_patterns": "Unknown",
+                "user_emotion": "Unknown",
                 "coping_mechanisms": ["Undetermined"],
                 "support_system": "Unknown",
                 "move_to_next": len(user_messages_in_stage) >= 3,

@@ -4,12 +4,14 @@ class CBTAgent:
     def __init__(self):
         self.current_stage = 0
         self.stages = [
+            "Pre-Stage",
             "Assessment",
             "Explore & Formulation",
             "Information Gathering",
             "Therapy Implementation"
         ]
         self.stage_completion_criteria = {
+            "Pre-Stage": self._pre_stage_completion,
             "Assessment": self._assess_stage_completion,
             "Explore & Formulation": self._explore_formulation_stage_completion,
             "Information Gathering": self._information_gathering_stage_completion,
@@ -58,6 +60,13 @@ class CBTAgent:
         return (
             summary.get('move_to_next', False) and
             summary.get('therapy_progress', False)
+        )
+
+    def _pre_stage_completion(self, summary):
+        return (
+            summary.get('move_to_next', False) and
+            summary.get('user_name') and
+            len(summary.get('interests', [])) > 0
         )
 
     def get_stage_progress(self):
