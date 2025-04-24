@@ -96,11 +96,14 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
         (6) rationale: Explanation for the decision to move or not move to the next stage.
 
         Guidelines for determining `move_to_next`:
-        - Set to `true` if the teenager's key concerns, emotional patterns, coping mechanisms, and support system have been sufficiently discussed.
-        - Set to `true` if the conversation has lasted long enough to establish a clear understanding of their situation.
-        - Set to `false` if more clarification is needed about their emotional responses, coping strategies, or relationships.
+        - Set to `true` ONLY if ALL of the following conditions are met:
+          1. At least 2 key issues have been clearly identified
+          2. At least 2 coping mechanisms have been discussed
+          3. Support system has been thoroughly explored
+          4. Impact on daily functioning has been assessed
+        - Otherwise, set to `false` and explain what information is still needed
 
-        ### Example:
+        Example:
 
         #### Input:
         [
@@ -116,8 +119,7 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
             "user_emotion": "sad",
             "coping_mechanisms": ["Self-isolation", "Avoidance"],
             "support_system": "Close relationship with mother, strained relationship with father, limited openness with friends.",
-            "move_to_next": true,
-            "rationale": "Sufficient information has been gathered regarding the teenager's emotional patterns, coping mechanisms, and support system, allowing for an informed therapy selection."
+            "move_to_next": false
         }
 
         """,
@@ -152,7 +154,8 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
             summary = json.loads(response.choices[0].message.content)
             
             # If we have 3 or more user messages in this stage, advance to next stage
-            if len(user_messages_in_stage) >= 6 and not summary.get("move_to_next", False):
+            if len(user_messages_in_stage) >= 13 and not summary.get("move_to_next", False):
+                print(user_messages_in_stage)
                 summary["move_to_next"] = True
                 if "rationale" in summary:
                     summary["rationale"] += " Moved to next stage after 3 turns of conversation."
