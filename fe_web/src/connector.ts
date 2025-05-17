@@ -48,11 +48,16 @@ export const savePreferencesToBackend = async (preferences: ChatPreferences): Pr
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(preferences),
+            body: JSON.stringify({
+                user_id: 'default_user',  // You can make this dynamic if you have user authentication
+                preferences: preferences
+            }),
         });
 
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            const errorData = await response.json();
+            console.error("Server error details:", errorData);
+            throw new Error(`HTTP error! Status: ${response.status}. Details: ${errorData.error || 'Unknown error'}`);
         }
 
         return await response.json();

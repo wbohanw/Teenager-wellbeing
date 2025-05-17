@@ -89,11 +89,12 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
         (5) rationale: Explanation of how the above properties were derived
 
         Guidelines for determining `move_to_next`:
-        - Set to `true` if the user has shared their primary concerns.
-        - Set to `true` if good rapport has been established.
-        - Set to `true` if the conversation has sufficiently covered the user's emotions and experiences.
-        - Set to `true` if the dialogue has lasted more than 5 turns.
-        - Otherwise, set to `false`.
+        - Set to `true` ONLY if ALL of the following conditions are met:
+          1. The user has explicitly shared at least one specific concern or problem
+          2. The conversation has lasted at least 3 turns
+          3. The user has responded to at least 2 different questions
+          4. The user's emotional state has been clearly identified
+        - Otherwise, set to `false` and explain what information is still needed
 
         Example:
         Input:
@@ -108,8 +109,10 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
             "stress_level": "high",
             "user_emotion": "sad",
             "eligible_for_therapy": true,
-            "move_to_next": true,
-            "rationale": "The user expressed a key episode of being bullied, and their emotions of feeling very down and oppressed were clearly identified."
+            "move_to_next": false,
+            "rationale": "While the user has shared a key concern about being bullied, more information is needed about the specific circumstances, their coping mechanisms, and support system before moving to the next stage.",
+            "key_concerns": ["Bullying", "Emotional distress"],
+            "rapport_established": false
         }
         """,
         gpt_params={"temperature": 0.1},
@@ -133,7 +136,7 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
             if field not in summary:
                 summary[field] = "Unknown" if field != "move_to_next" else False
                 
-        if len(dialogue) > 6 and not summary["move_to_next"]:
+        if len(dialogue) > 5 and not summary["move_to_next"]:
             summary["move_to_next"] = True
             summary["rationale"] += " Moved to next stage due to conversation length."
         

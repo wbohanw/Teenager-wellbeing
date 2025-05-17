@@ -42,7 +42,6 @@ class CBTChatbot:
         self.user_info = {}
 
     def update_preferences(self, preferences):
-        """Update the chatbot's preferences"""
         self.preferences = preferences
         print(f"Updated preferences for user {self.user_id}: {preferences}")
 

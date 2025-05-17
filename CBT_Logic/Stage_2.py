@@ -95,22 +95,22 @@ class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
         (5) rationale: Explanation of how the above properties were derived
 
         Guidelines for determining `move_to_next`:
-        - Set to `true` if the user has clearly expressed their primary concerns.
-        - Set to `true` if the conversation has sufficiently explored the user's emotions and experiences.
-        - Set to `true` if rapport has been established.
-        - Set to `true` if the dialogue has lasted more than 5 turns.
-        - Otherwise, set to `false`.
+        - Set to `true` ONLY if ALL of the following conditions are met:
+          1. At least 2 cognitive patterns have been identified
+          2. At least 1 emotional trigger has been identified
+          3. At least 1 behavioral pattern has been identified
+          4. The conversation has lasted at least 4 turns
+          5. The user has responded to at least 2 different questions
+        - Otherwise, set to `false` and explain what information is still needed
 
         Example:
 
         ### Input:
         [
-            {"role": "assistant", "content": "你今天想聊些什么呢？"},
-            {"role": "user", "content": "我最近学习压力很大，感觉快撑不住了。"},
-            {"role": "assistant", "content": "听起来你承受了很大的压力，是什么让你感到如此焦虑呢？"},
-            {"role": "user", "content": "我有很多作业，还要准备考试，感觉根本做不完。"},
-            {"role": "assistant", "content": "你的焦虑主要是因为学业负担太重，对吗？"},
-            {"role": "user", "content": "是的，我每天都在担心自己跟不上进度。"}
+            {"role": "assistant", "content": "当你感到压力很大时，你通常会怎么做？"},
+            {"role": "user", "content": "我会自己待着，不想跟别人说话。有时候会焦虑到没办法集中注意力学习。"},
+            {"role": "assistant", "content": "我明白了。你和家人、朋友的关系怎么样呢？"},
+            {"role": "user", "content": "我和妈妈关系很好，但经常和爸爸争吵。我有几个好朋友，但有时觉得不能完全敞开心扉。"}
         ]
 
         ### Output:
@@ -118,14 +118,15 @@ class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
             "stress_level": "high",
             "user_emotion": "sad",
             "eligible_for_therapy": true,
-            "move_to_next": true,
-            "rationale": "The user has explicitly stated feeling overwhelmed due to academic stress. Their emotions and concerns have been discussed over multiple turns, making it reasonable to proceed."
+            "move_to_next": false,
+            "rationale": "While some patterns have been identified, more exploration is needed regarding cognitive patterns and emotional triggers. The conversation needs to delve deeper into the user's thought processes and specific situations that trigger their emotional responses."
         }
 
         """,
             gpt_params={"temperature": 0.1},
             dialogue_filter=lambda dialogue, _: dialogue[-5:]
         )
+
     def summarize(self, dialogue: List[Dict[str, str]]) -> str:
         prompt = f"{self.base_instruction}\n\nDialogue:\n"
         for turn in dialogue[-10:]:  # Consider up to 10 turns
@@ -148,9 +149,9 @@ class ExploreFormulationSummarizer(ChatGPTDialogueSummarizer):
         
         try:
             summary = json.loads(response.choices[0].message.content)
-            
+            print(user_messages_in_stage)
             # If we have 3 or more user messages in this stage, advance to next stage
-            if len(user_messages_in_stage) >= 6 and not summary.get("move_to_next", False):
+            if len(user_messages_in_stage) >= 8 and not summary.get("move_to_next", False):
                 summary["move_to_next"] = True
                 if "rationale" in summary:
                     summary["rationale"] += " Moved to next stage after 3 turns of conversation."
