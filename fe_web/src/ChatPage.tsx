@@ -21,9 +21,7 @@ function ChatPage() {
   ]);
   const [inputText, setInputText] = useState("");
   const [currentVideo, setCurrentVideo] = useState(action5);
-  const [showNextButton, setShowNextButton] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferences, setPreferences] = useState(
@@ -181,27 +179,6 @@ function ChatPage() {
     }[emotion] || [80, 5]);
   };
 
-  // const handleNext = async () => {
-  //   setShowNextButton(false);
-  //   setIsTyping(true);
-  //   playSpecificVideo('thinking');
-    
-  //   const response = await sendMessageToChatbot("next");
-  //   setIsTyping(false);
-    
-  //   if (response.response) {
-  //     setMessages(prev => [...prev, { 
-  //       text: response.response, 
-  //       sender: "bot", 
-  //       timestamp: new Date() 
-  //     }]);
-      
-  //     if (response.user_emotion) {
-  //       playEmotionVideo(response.user_emotion.toLowerCase());
-  //     }
-  //   }
-  // };
-
   const handleTraitToggle = (trait: string) => {
     setSelectedTraits(prev => prev.includes(trait) 
       ? prev.filter(t => t !== trait) 
@@ -250,7 +227,6 @@ function ChatPage() {
       }]);
       
       if (response.user_emotion) playEmotionVideo(response.user_emotion.toLowerCase());
-      if (response.move_to_next) setShowNextButton(true);
     }
   };
 
@@ -460,27 +436,6 @@ function ChatPage() {
     </div>
   </div>
 )}
-
-      {/* <div className="fixed right-4 bottom-4 flex flex-col gap-2 z-10">
-        {[
-          {icon: 'random', text: '随机'},
-          {icon: 'sad', text: '悲伤'},
-          {icon: 'dance', text: '跳舞'},
-          {icon: 'happy', text: '快乐'},
-          {icon: 'support', text: '支持'},
-          {icon: 'love', text: '爱'}
-        ].map((btn, index) => (
-          <button
-            key={index}
-            onClick={() => playSpecificVideo(btn.icon)}
-            className="flex items-center gap-2 px-4 py-2 bg-bg-transparent hover:bg-bg-secondary border border-border rounded-full shadow-sm transition-colors duration-normal"
-          >
-
-            {btn.text}
-          </button>
-        ))}
-      </div> */}
-      
 
       {emojisArray.map(emoji => (
         <div 

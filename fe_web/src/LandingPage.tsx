@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import miloImage from "./images/milo.png";
 import backgroundImage from "./images/background.png";
@@ -6,7 +6,6 @@ import { TbSquareRoundedLetterM } from "react-icons/tb";
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   return (
     <div className="flex flex-col min-h-screen bg-bg-secondary text-text-primary transition-all duration-normal relative overflow-hidden">
@@ -27,7 +26,6 @@ const LandingPage: React.FC = () => {
         <div className="md:hidden block">
           <button 
             className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer text-text-secondary"
-            onClick={() => setMobileMenuOpen(true)}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-6 h-6">
               <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
