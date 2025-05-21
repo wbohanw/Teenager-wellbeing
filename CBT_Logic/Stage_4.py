@@ -5,8 +5,14 @@ import os
 from dotenv import load_dotenv
 from pinecone import Pinecone
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
+api_key = os.getenv("AIHUBMIX_API_KEY")
+# site_url = os.getenv("SITE_URL", "http://localhost:3000")
+# site_name = os.getenv("SITE_NAME", "Teenager Wellbeing")
+
+client = OpenAI(
+    base_url="https://aihubmix.com/v1",
+    api_key=api_key,
+)
 from typing import List, Dict
 from langchain.embeddings.openai import OpenAIEmbeddings
 import matplotlib.pyplot as plt
@@ -19,11 +25,11 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
 
-
+openai_key = os.getenv("OPENAI_API_KEY")
 pc = Pinecone(api_key="6d5cdd0a-90b1-454c-bb02-57c80dac0797")
 pinecone_index_name = "newadvice"
 index = pc.Index(pinecone_index_name)
-embed_model = OpenAIEmbeddings(openai_api_key=api_key)
+embed_model = OpenAIEmbeddings(openai_api_key=openai_key)
 
 
  
@@ -189,12 +195,11 @@ class TherapyImplementationStage(ChatGPTResponseGenerator):
 
         Therapist (provide your response with bullet points):
         """
-
+        
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="deepseek-ai/DeepSeek-V3-0324",
             messages=[{"role": "system", "content": prompt}]
         )
-
         return response.choices[0].message.content
 
 class TherapyImplementationSummarizer(ChatGPTDialogueSummarizer):
@@ -276,7 +281,9 @@ class TherapyImplementationSummarizer(ChatGPTDialogueSummarizer):
             user_messages_in_stage = [msg for msg in stage_4_messages if msg['role'] == 'user']
             
             try:
-                summary = json.loads(response.choices[0].message.content)
+                output = response.choices[0].message.content.strip()
+                output = output.replace("```json", "").replace("```", "").strip()
+                summary = json.loads(output)
                 
                 # If we have 3 or more user messages in this stage, consider continuing
                 if len(user_messages_in_stage) >= 3 and not summary.get("continue_session", True):
