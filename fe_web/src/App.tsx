@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 // We'll update these imports after creating the TypeScript files
 import LandingPage from "./LandingPage";
