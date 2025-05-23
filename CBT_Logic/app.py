@@ -174,7 +174,7 @@ def test_gpt():
         test_prompt = "Give me a simple suggestion for a teenager who is feeling depressed."
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="DeepSeek-V3-0324",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant for teenagers."},
                 {"role": "user", "content": test_prompt}

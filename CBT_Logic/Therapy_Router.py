@@ -5,8 +5,16 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
+# api_key = os.getenv("OPENAI_API_KEY")
+# client = OpenAI(api_key=api_key)
+api_key = os.getenv("AIHUBMIX_API_KEY")
+# site_url = os.getenv("SITE_URL", "http://localhost:3000")
+# site_name = os.getenv("SITE_NAME", "Teenager Wellbeing")
+
+client = OpenAI(
+    base_url="https://aihubmix.com/v1",
+    api_key=api_key,
+)
 from typing import List, Dict
 
 class TherapyRouter:
@@ -61,7 +69,7 @@ class TherapyRouter:
         """
 
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="deepseek-ai/DeepSeek-V3-0324",
             messages=[{"role": "system", "content": prompt}]
         )  
 

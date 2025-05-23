@@ -264,7 +264,7 @@ class TherapyImplementationSummarizer(ChatGPTDialogueSummarizer):
             prompt += "\nSummary:"
             
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="deepseek-ai/DeepSeek-V3-0324",
                 messages=[{"role": "system", "content": prompt}]
             )
             

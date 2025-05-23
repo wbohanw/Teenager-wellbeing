@@ -107,7 +107,7 @@ class CBTChatbot:
         prompt = self.get_prompt_with_preferences(base_prompt)
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="deepseek-ai/DeepSeek-V3-0324",
             messages=[{"role": "system", "content": prompt}]
         )
         therapy_response = response.choices[0].message.content
@@ -227,32 +227,32 @@ class CBTChatbot:
             )
 
     
-if __name__ == "__main__":
-    # Test case
-    api_key =  os.environ.get("OPENAI_API_KEY") # Replace with your actual OpenAI API key
-    chatbot = CBTChatbot(api_key)
+# if __name__ == "__main__":
+#     # Test case
+#     api_key =  os.environ.get("OPENAI_API_KEY") # Replace with your actual OpenAI API key
+#     chatbot = CBTChatbot(api_key)
 
-    print("CBT Chatbot initialized. Type 'quit' to exit.")
+#     print("CBT Chatbot initialized. Type 'quit' to exit.")
 
-    while True:
-        print(f"\n{chatbot.get_stage_progress()}")
-        user_input = input("User: ")
+#     while True:
+#         print(f"\n{chatbot.get_stage_progress()}")
+#         user_input = input("User: ")
 
-        if user_input.lower() == 'quit':
-            break
+#         if user_input.lower() == 'quit':
+#             break
 
-        response = chatbot.chat(user_input)
-        print("---------------------------------------------")
+#         response = chatbot.chat(user_input)
+#         print("---------------------------------------------")
         
-        alert_message = chatbot.alert(user_input)
-        if alert_message:
-            print("ALERT:", alert_message)
-            break
-        else:
-            print("Chatbot:", response)
+#         alert_message = chatbot.alert(user_input)
+#         if alert_message:
+#             print("ALERT:", alert_message)
+#             break
+#         else:
+#             print("Chatbot:", response)
 
-        if "Therapy session completed" in response:
-            print(chatbot.conversation_history)
-            break
+#         if "Therapy session completed" in response:
+#             print(chatbot.conversation_history)
+#             break
             
-    print("Chatbot session ended.")
+#     print("Chatbot session ended.")

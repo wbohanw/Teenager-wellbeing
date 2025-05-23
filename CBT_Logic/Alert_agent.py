@@ -5,9 +5,16 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
+# api_key = os.getenv("OPENAI_API_KEY")
+# client = OpenAI(api_key=api_key)
+api_key = os.getenv("AIHUBMIX_API_KEY")
+# site_url = os.getenv("SITE_URL", "http://localhost:3000")
+# site_name = os.getenv("SITE_NAME", "Teenager Wellbeing")
 
+client = OpenAI(
+    base_url="https://aihubmix.com/v1",
+    api_key=api_key,
+)
 class AlertAgent:
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -43,7 +50,7 @@ class AlertAgent:
         prompt = f"{self.base_instruction}\n\nConversation:\n{conversation_text}\n\nAnalysis:\n{user_input}"
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="deepseek-ai/DeepSeek-V3-0324",
             messages=[{"role": "system", "content": prompt}]
         )
 
