@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000"; 
+const API_URL = "http://8.133.202.210"; 
 
 interface ChatPreferences {
   language?: string;
@@ -43,7 +43,7 @@ export const sendMessageToChatbot = async (message: string, preferences: ChatPre
 
 export const savePreferencesToBackend = async (preferences: ChatPreferences): Promise<{status: string, message: string}> => {
     try {
-        const response = await fetch('http://localhost:5000/preferences', {
+        const response = await fetch(`${API_URL}/preferences`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
