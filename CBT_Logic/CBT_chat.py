@@ -13,9 +13,17 @@ import os
 from dotenv import load_dotenv
 import json
 from openai import OpenAI
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
+# api_key = os.getenv("OPENAI_API_KEY")
+# client = OpenAI(api_key=api_key)
 load_dotenv()
+api_key = os.getenv("OPENROUTER_API_KEY")
+# site_url = os.getenv("SITE_URL", "http://localhost:3000")
+# site_name = os.getenv("SITE_NAME", "Teenager Wellbeing")
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=api_key,
+)
 
 class CBTChatbot:
     def __init__(self, api_key):
@@ -38,8 +46,9 @@ class CBTChatbot:
         self.click = False
         self.suggestion = None
         self.end_session = False
-        self.preferences = None
+        self.preferences = {}
         self.user_info = {}
+        # self.current_stage = PreStage()
 
     def update_preferences(self, preferences):
         self.preferences = preferences

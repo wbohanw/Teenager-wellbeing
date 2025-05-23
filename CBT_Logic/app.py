@@ -9,8 +9,15 @@ import json
 from user_preferences import preferences_manager
 
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
+api_key = os.getenv("AIHUBMIX_API_KEY")
+# site_url = os.getenv("SITE_URL", "http://localhost:3000")
+# site_name = os.getenv("SITE_NAME", "Teenager Wellbeing")
+
+client = OpenAI(
+    base_url="https://aihubmix.com/v1",
+    api_key=api_key,
+)
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -151,7 +158,7 @@ def get_session_status(user_id):
 def status():
     return jsonify({
         'status': 'online',
-        'api_key_configured': bool(os.getenv('OPENAI_API_KEY')),
+        'api_key_configured': bool(os.getenv('OPENROUTER_API_KEY')),
         'endpoints': {
             'regular_chat': '/gpt/chat',
             'realtime_chat': '/gpt/realtime_chat',

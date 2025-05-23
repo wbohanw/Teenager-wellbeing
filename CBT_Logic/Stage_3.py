@@ -4,8 +4,14 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
+api_key = os.getenv("AIHUBMIX_API_KEY")
+# site_url = os.getenv("SITE_URL", "http://localhost:3000")
+# site_name = os.getenv("SITE_NAME", "Teenager Wellbeing")
+
+client = OpenAI(
+    base_url="https://aihubmix.com/v1",
+    api_key=api_key,
+)
 from typing import List, Dict
 
 class InformationGatheringStage(ChatGPTResponseGenerator):
@@ -73,7 +79,7 @@ class InformationGatheringStage(ChatGPTResponseGenerator):
         prompt += f"\n\nConversation History: {json.dumps(conversation_history[-6:], indent=2)}\nUser Input: {user_input}"
         
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="deepseek-ai/DeepSeek-V3-0324",
             messages=[{"role": "system", "content": prompt}]
         )
         return response.choices[0].message.content
@@ -134,7 +140,7 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
         prompt += "\nSummary:"
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="deepseek-ai/DeepSeek-V3-0324",
             messages=[{"role": "system", "content": prompt}]
         )
         
@@ -151,11 +157,12 @@ class InformationGatheringSummarizer(ChatGPTDialogueSummarizer):
         user_messages_in_stage = [msg for msg in stage_3_messages if msg['role'] == 'user']
         
         try:
-            summary = json.loads(response.choices[0].message.content)
-            
+            output = response.choices[0].message.content.strip()
+            output = output.replace("```json", "").replace("```", "").strip()
+            summary = json.loads(output)
+                
             # If we have 3 or more user messages in this stage, advance to next stage
             if len(user_messages_in_stage) >= 13 and not summary.get("move_to_next", False):
-                print(user_messages_in_stage)
                 summary["move_to_next"] = True
                 if "rationale" in summary:
                     summary["rationale"] += " Moved to next stage after 3 turns of conversation."

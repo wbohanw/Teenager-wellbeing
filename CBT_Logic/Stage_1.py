@@ -4,9 +4,16 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 import re
+import requests
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
+api_key = os.getenv("AIHUBMIX_API_KEY")
+# site_url = os.getenv("SITE_URL", "http://localhost:3000")
+# site_name = os.getenv("SITE_NAME", "Teenager Wellbeing")
+
+client = OpenAI(
+    base_url="https://aihubmix.com/v1",
+    api_key=api_key,
+)
 from typing import List, Dict
 
 class AssessmentStage(ChatGPTResponseGenerator):
@@ -66,7 +73,7 @@ class AssessmentStage(ChatGPTResponseGenerator):
         prompt += f"\n\nConversation History: {json.dumps(conversation_history[-6:], indent=2)}\nUser Input: {user_input}"
         
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="deepseek-ai/DeepSeek-V3-0324",
             messages=[{"role": "system", "content": prompt}]
         )
         return response.choices[0].message.content
@@ -125,11 +132,12 @@ class AssessmentSummarizer(ChatGPTDialogueSummarizer):
             prompt += f"{turn['role'].capitalize()}: {turn['content']}\n"
         prompt += "\nSummary:"
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="deepseek-ai/DeepSeek-V3-0324",
             messages=[{"role": "system", "content": prompt}]
         )
-        output = response.choices[0].message.content
-        output = re.sub(r"```jsonl\s*|```", "", output).strip()
+        print("\n\n\n\n aaaaa + \n" + response.choices[0].message.content)
+        output = response.choices[0].message.content.strip()
+        output = output.replace("```json", "").replace("```", "").strip()
         summary = json.loads(output)
         required_fields = ["stress_level", "user_emotion", "eligible_for_therapy", "move_to_next", "rationale"]
         for field in required_fields:
