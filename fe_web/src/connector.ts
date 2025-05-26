@@ -1,4 +1,4 @@
-const API_URL = "http://8.133.202.210"; 
+const API_URL = "https://milobackendapi.icu"; 
 
 interface ChatPreferences {
   language?: string;
