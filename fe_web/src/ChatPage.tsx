@@ -54,18 +54,18 @@ function ChatPage() {
 
   // Preference options
   const personalityTraits = [
-    'Openness', 'Closedness', 'Agreeable', 'Non-Agreeable', 'Conscientiousness', 'Unconscientiousness',
+    '开放', '保守', '亲和', '疏离', '严谨', '随性',
   ];
 
   const tones = [
-    'Formal', 'Casual'
+    '正式', '随意'
   ];
-
+  
   const titles = [
-    'Personal and Informal Titles', 'Professional and Formal Titles', 'Avoiding Use of Titles'
+    '个人和非正式称呼', '专业和正式称呼', '避免使用称呼'
   ];
-
-  const properNouns = ['him/his', 'her/she'];
+  
+  const properNouns = ['他/他的', '她/她的'];
   
   const [emojisArray, setEmojisArray] = useState<Array<{id: number, left: number, top: number, emoji: string, speed: number, size: number}>>([]);
   
@@ -331,18 +331,28 @@ function ChatPage() {
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-md">
     <div className="bg-white/90 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 animate-[fadeIn_0.3s_ease-out]">
       <div className="px-6 py-4 space-y-5">
-        <h2 className="text-2xl font-bold text-gray-700 border-b pb-2">聊天偏好设置</h2>
-
+        <div className="flex justify-between items-center border-b pb-2">
+          <h2 className="text-2xl font-bold text-gray-700">聊天偏好设置</h2>
+          <button
+            onClick={() => setShowPreferences(false)}
+            className="text-[#9DC08B] hover:text-[#45B36B] transition duration-200 text-2xl cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
         <div>
           <h3 className="font-semibold mb-1 text-gray-600">语言</h3>
-          <input
-            type="text"
+          <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
-            placeholder="请输入首选语言"
-          />
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#9DC08B] cursor-pointer"
+          >
+            <option value="" disabled>请选择语言</option>
+            <option value="中文">中文</option>
+            <option value="English">English</option>
+          </select>
         </div>
+
 
         <div>
           <h3 className="font-semibold mb-1 text-gray-600">对话目的</h3>
@@ -362,7 +372,7 @@ function ChatPage() {
               <button
                 key={title}
                 onClick={() => setSelectedTitle(title)}
-                className={`p-2 rounded-lg border transition-all duration-200 text-left hover:bg-[#AEC9A0] hover:border-[#9DC08B]
+                className={`p-2 rounded-lg border transition-all duration-200 text-left hover:bg-[#AEC9A0] hover:border-[#9DC08B] cursor-pointer
 
                   ${selectedTitle === title ? 'bg-[#9DC08B] border-[#9DC08B] font-medium' : 'bg-white border-gray-300'
                   }`}
@@ -380,7 +390,7 @@ function ChatPage() {
               <button
                 key={noun}
                 onClick={() => setSelectedProperNoun(noun)}
-                className={`p-2 rounded-lg border transition-all duration-200 hover:bg-[#AEC9A0] hover:border-[#9DC08B]
+                className={`p-2 rounded-lg border transition-all duration-200 hover:bg-[#AEC9A0] hover:border-[#9DC08B] cursor-pointer
 
                   ${selectedProperNoun === noun ? 'bg-[#9DC08B] border-[#9DC08B] font-medium' : 'bg-white border-gray-300'}`}
               >
@@ -397,7 +407,7 @@ function ChatPage() {
               <button
                 key={trait}
                 onClick={() => handleTraitToggle(trait)}
-                className={`p-2 rounded-lg border transition-all duration-200 hover:bg-[#AEC9A0] hover:border-[#9DC08B]
+                className={`p-2 rounded-lg border transition-all duration-200 hover:bg-[#AEC9A0] hover:border-[#9DC08B] cursor-pointer
 
                   ${selectedTraits.includes(trait) ? 'bg-[#9DC08B] border-[#9DC08B] font-medium' : 'bg-white border-gray-300'}`}
               >
@@ -414,7 +424,7 @@ function ChatPage() {
               <button
                 key={tone}
                 onClick={() => setSelectedTone(tone)}
-                className={`p-2 rounded-lg border transition-all duration-200 hover:bg-[#AEC9A0] hover:border-[#9DC08B]
+                className={`p-2 rounded-lg border transition-all duration-200 hover:bg-[#AEC9A0] hover:border-[#9DC08B] cursor-pointer
 
                   ${selectedTone === tone ? 'bg-[#9DC08B] border-[#9DC08B] font-medium' : 'bg-white border-gray-300'}`}
               >
@@ -428,7 +438,7 @@ function ChatPage() {
       <div className="px-6 py-3 flex justify-end border-t border-gray-200">
         <button 
           onClick={savePreferences}
-          className="px-5 py-2 bg-[#9DC08B] hover:bg-[#AEC9A0] text-white rounded-lg shadow transition duration-200"
+          className="px-5 py-2 bg-[#9DC08B] hover:bg-[#AEC9A0] text-white rounded-lg shadow transition duration-200 cursor-pointer"
         >
           保存偏好
         </button>
