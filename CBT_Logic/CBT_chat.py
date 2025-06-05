@@ -55,7 +55,6 @@ class CBTChatbot:
         print(f"Updated preferences for user {self.user_id}: {preferences}")
 
     def get_prompt_with_preferences(self, base_prompt: str) -> str:
-        """Enhance the base prompt with user preferences"""
         if not self.preferences:
             return base_prompt
 

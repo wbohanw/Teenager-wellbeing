@@ -43,7 +43,8 @@ class InformationGatheringStage(ChatGPTResponseGenerator):
             - "Have you noticed any patterns in your thoughts or behaviors when you're feeling upset?"
             - "What strategies have you tried in the past to cope with difficult emotions?"
 
-            Note: answer a question at a time! Do not overwhelm the user.
+            Note: answer and ask a single question at a time! Do not overwhelm the user.
+            Note: please do not output your thinking process in the response, like no parentheses, no brackets, etc.
             """
         )
 
