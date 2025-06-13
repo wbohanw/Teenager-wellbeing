@@ -38,6 +38,9 @@ class AssessmentStage(ChatGPTResponseGenerator):
             - Maintain a supportive and encouraging tone
             - Validate their feelings and experiences
             - Create a safe space for them to share
+
+            Note: answer and ask a single question at a time! Do not overwhelm the user.
+            Note: please do not output your thinking process in the response, like no parentheses, no brackets, etc.
             """
         )
 

@@ -25,11 +25,11 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
 
-openai_key = os.getenv("OPENAI_API_KEY")
+openai_key = os.getenv("AIHUBMIX_API_KEY")
 pc = Pinecone(api_key="6d5cdd0a-90b1-454c-bb02-57c80dac0797")
 pinecone_index_name = "newadvice"
 index = pc.Index(pinecone_index_name)
-embed_model = OpenAIEmbeddings(openai_api_key=openai_key)
+embed_model = OpenAIEmbeddings(openai_api_key=openai_key, base_url="https://aihubmix.com/v1")
 
 
  
@@ -56,6 +56,8 @@ class TherapyImplementationStage(ChatGPTResponseGenerator):
             - Break down complex concepts into manageable steps
             - Provide clear, actionable advice
             - Validate their experiences and efforts
+
+            Note: please do not output your thinking process in the response, like no parentheses, no brackets, etc.
             """
         )
 

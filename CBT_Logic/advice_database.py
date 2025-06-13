@@ -10,7 +10,7 @@ load_dotenv()
 
 cloud = os.environ.get('PINECONE_CLOUD') or 'aws'
 region = os.environ.get('PINECONE_REGION') or 'us-east-1'
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("AIHUBMIX_API_KEY")
 
 
 embed_model = "text-embedding-ada-002"
@@ -20,7 +20,7 @@ def create_vectorstore(path):
 
     pinecone_index_name = "newadvice"
 
-    embed_model = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+    embed_model = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY, base_url="https://aihubmix.com/v1")
     if pinecone_index_name not in pc.list_indexes().names():
         pc.create_index(
             name=pinecone_index_name, 

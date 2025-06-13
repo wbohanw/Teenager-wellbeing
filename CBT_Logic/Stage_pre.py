@@ -45,6 +45,9 @@ class PreStage(ChatGPTResponseGenerator):
             - Make the teenager feel comfortable
             - Don't rush through questions - have a genuine conversation
             - If they don't want to share certain information, respect their privacy
+
+            Note: answer and ask a single question at a time! Do not overwhelm the user.
+            Note: please do not output your thinking process in the response, like no parentheses, no brackets, etc.
             """
         )
 
