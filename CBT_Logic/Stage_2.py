@@ -45,7 +45,8 @@ class ExploreFormulationStage(ChatGPTResponseGenerator):
             - "What beliefs about yourself or the world do you think might be influencing your thoughts in these situations?"
             - "How have these patterns of thinking affected your daily life or relationships?"
 
-            Note: answer a question at a time! Do not overwhelm the user.
+            Note: answer and ask a single question at a time! Do not overwhelm the user.
+            Note: please do not output your thinking process in the response, like no parentheses, no brackets, etc.
             """
         )
 
